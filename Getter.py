@@ -1,22 +1,27 @@
 import requests as reqs
 from bs4 import BeautifulSoup as BS
-from itertools import count
+from datetime import datetime as dt, timedelta as td, time as t
+
 class twdct:
     def __init__(self, **kwargs):
         self.a = {}; self.b = {}
         for key, item in kwargs.items(): self[key] = item
+        self.n = 0
+        self.current= -1
+        self.to_iter = []
     def __setitem__(self, a, b):
         if a in self.a or a in self.b or b in self.a or b in self.b:
             raise ValueError(f"element already exist")
+        self.n+=1
         self.a[a] = b; self.b[b] = a
     def __getitem__(self, item):
         try: return self.a[item]
         except KeyError: return self.b[item]
+    def __iter__(self): return iter(self.a.items())
     def __str__(self):
         res = ""
         for key, item in self.a.items(): res+= f"{key} <> {item}\n"
         return res
-
 
 
 class Getter:
@@ -26,16 +31,25 @@ class Getter:
     WAITLIST = "Waitlist"
     USERN = "tung.angela@hotmail.com"
     PASSW = "BooandBaby"
-    FULLINFO = "ID uDay uTime uName Day Time Name Status SignTime Link".split()
+    FULLINFO = "ID uDay uTime uName Day Time Name Status SignTime dtStart dtEnd dtSignTime Link".split()
     URL = "https://movatiathletic.com/club-schedules/?club=guelph"
 
     def __init__(self):
+        self.today = dt.combine(dt.now().date(), t(0))
         self.days = twdct()
+        self.dates = twdct()
         self.Raw_Info = {}
         self.Site = self.get()
         self.set_days()
 
     def get(self, url= None): return BS(reqs.get(url or self.URL).text, features= "lxml")
+
+    def _calc_date(self, d):
+        month, date = d.split()
+        if len(date) == 1: d.replace(date, f"0{date}")
+        d = dt.strptime(f"{self.today.year} {month} {date}", "%Y %B %d")
+        if d < self.today: d += td(365)
+        return d
 
     def set_days(self):
         # class = "slick-list", or how I would normally do it doesn't work for some reason
@@ -44,10 +58,14 @@ class Getter:
             try:
                 if "carousel-item" in div["class"]:
                     wkday, month, date = div.text.split()
-                    self.days[f"{wkday}{date}"] = f"{month} {date}"
+                    wkdaydate = f"{wkday}{date}"
+                    monthdate = f"{month} {date}"
+                    self.days[wkdaydate] = monthdate
+                    self.dates[wkdaydate] = self._calc_date(monthdate)
 
                 elif "scheduleDay" in div["class"]: break
             except KeyError: pass
+
         return self.days
 
     def hash(self, uDay, uTime, uName):
@@ -116,11 +134,11 @@ class Getter:
         for id_ in ids:
             link = self.Raw_Info[id_]["Link"]
             site = self.login_get(link)
-
-            info = self.Raw_Info[id_].update(dict(
-                                       Name= " ".join(site.find("h2").text.split()[:-3]),
-                                       Day= site.find("h3").text.split()[0],
-                                       Time= site.find("h2").small.text))
+            self.Raw_Info[id_].update(dict(
+                                   Name= " ".join(site.find("h2").text.split()[:-3]),
+                                   Day= site.find("h3").text.split()[0],
+                                   Time= site.find("h2").small.text))
+            info = self.Raw_Info[id_]
 
             # alert alert-error should only be found if I cannot sign in
             alert = site.find(class_="alert alert-error")
