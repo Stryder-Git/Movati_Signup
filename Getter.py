@@ -1,6 +1,10 @@
 import requests as reqs
 from bs4 import BeautifulSoup as BS
 from datetime import datetime as dt, timedelta as td, time as t
+from pandas import Series, read_csv
+from numpy import ones
+from json import load, dump
+from logging import getLogger, Formatter, FileHandler, INFO
 
 class twdct:
     def __init__(self, **kwargs):
@@ -33,14 +37,67 @@ class Getter:
     PASSW = "BooandBaby"
     FULLINFO = "ID uDay uTime uName Day Time Name Status SignTime dtStart dtEnd dtSignTime Link".split()
     URL = "https://movatiathletic.com/club-schedules/?club=guelph"
+    INFOLOC = "Data\\Info.csv"
+    AUTOLOC = "Data\\AutoSignUp.json"
+    SIGNEDLOC = "Data\\signedup.txt"
+    LISTSLOC = "Data\\Lists.json"
+    FILTERSLOC = "Data\\Filters.json"
+    LOGLOC = "Data\\Logs"
 
-    def __init__(self):
+    @classmethod
+    def _get_class_name(cls): return cls.__name__
+
+    def __init__(self, get_site= True):
         self.today = dt.combine(dt.now().date(), t(0))
         self.days = twdct()
         self.dates = twdct()
         self.Raw_Info = {}
-        self.Site = self.get()
-        self.set_days()
+
+        if get_site:
+            self.Site = self.get()
+            self.set_days()
+        else: self.Site = None
+        self.Info = self.getInfo()
+        self.AutoSignUp = self.getAuto()
+        self.Lists = self.getLists()
+        self.Filters = self.getFilters()
+
+        self.mylogger = self.create_logger(self._get_class_name())
+
+    def create_logger(self, name):
+        handler = FileHandler(f"{self.LOGLOC}\\{name}.log")
+        handler.setFormatter(Formatter("%(asctime)s\t%(message)s"))
+        logger = getLogger(name)
+        logger.addHandler(handler)
+        logger.setLevel(INFO)
+        return logger
+
+
+    def getInfo(self, index_col= "ID"):
+        return read_csv(self.INFOLOC, index_col= index_col, parse_dates= ["dtStart", "dtEnd", "dtSignTime"])
+    def saveInfo(self): self.Info.to_csv(self.INFOLOC, index= True)
+    def getAuto(self):
+        with open(self.AUTOLOC, "r") as auto: return load(auto)
+    def saveAuto(self):
+        with open(self.SIGNEDLOC, "r") as signed: signed = signed.readlines()
+        for s in signed:
+            if s in self.AutoSignUp: self.AutoSignUp.remove(s)
+        with open(self.AUTOLOC, "w") as auto: dump(self.AutoSignUp, auto)
+        with open(self.SIGNEDLOC, "w") as signed: signed.write("")
+
+    def getLists(self):
+        with open(self.LISTSLOC, "r") as lists: return load(lists)
+    def saveLists(self):
+        with open(self.LISTSLOC, "w") as lists: dump(self.Lists, lists)
+    def getFilters(self):
+        with open(self.FILTERSLOC, "r") as filters: return load(filters)
+    def saveFilters(self):
+        with open(self.FILTERSLOC, "w") as filters: dump(self.Filters, filters)
+    def save_all(self):
+        self.saveInfo()
+        self.saveAuto()
+        self.saveLists()
+        self.saveFilters()
 
     def get(self, url= None): return BS(reqs.get(url or self.URL).text, features= "lxml")
 
@@ -90,12 +147,11 @@ class Getter:
                     name = clss["class"][2]
                     link = clss.find(class_= "schedSignup")
 
-                    # A unique id is created, if the same class is encountered
-                    # (for instances when refreshing, the id will be the same)
+                    # A unique id is created, if the same class is encountered,
+                    # (for instances when refreshing) the id will be the same
                     id_ = self.hash(day, time_, name)
                     # sometimes a class won't have a link to it available
-                    if not link.a is None: link = link.a["href"]
-                    else: link = None
+                    link = None if link.a is None else link.a["href"]
                     # save with classname, day and time as key to the link
                     self.Raw_Info[id_] = self.createInfoDict(
                         ID= id_, uDay= day, uTime= time_.strip(), uName= name, Link= link)
@@ -116,24 +172,28 @@ class Getter:
         elif "am" in time:
             return time.replace("am", ":00")
 
-    def login_get(self, url):
-        with reqs.Session() as s:
-            login_page = s.get(url)
+    def login_get(self, url, keep= False):
+        s = reqs.Session()
+        login_page = s.get(url)
 
-            Soup = BS(login_page.text, "lxml")
-            token = Soup.find_all(attrs={"type": "hidden"})
-            form = self._passForm(token)
+        Soup = BS(login_page.text, "lxml")
+        token = Soup.find_all(attrs={"type": "hidden"})
+        form = self._passForm(token)
 
-            response = s.post(login_page.url, data=form)
-            response = s.get(response.url)
-            return BS(response.text, "lxml")
+        response = s.post(login_page.url, data=form)
+        response = s.get(response.url)
+        soup = BS(response.text, "lxml")
+        if not keep:
+            s.close(); return soup
+        else:
+            return soup, s, response.url
 
     def set_full_info(self, ids):
         """should get a list of keys (tuples) for the class_links dct"""
         to_return = {}
         for id_ in ids:
             link = self.Raw_Info[id_]["Link"]
-            site = self.login_get(link)
+            site= self.login_get(link)
             self.Raw_Info[id_].update(dict(
                                    Name= " ".join(site.find("h2").text.split()[:-3]),
                                    Day= site.find("h3").text.split()[0],
@@ -164,22 +224,7 @@ class Getter:
             to_return[id_] = info
         return to_return
 
-
-
-
-
-if __name__ == '__main__':
-    from pprint import pprint
-    g = Getter()
-    g.set_days()
-    print(g.days)
-    g.set_basic_info()
-    # pprint(g.basic_info)
-    g.basic_info["TBO"] = {"Link": "https://api.groupexpro.com/gxp/reservations/start/index/12142353/04/27/2021"}
-    g.basic_info["Full"] = {"Link": "https://api.groupexpro.com/gxp/reservations/start/index/12142637/04/21/2021"}
-    g.basic_info["Available"] = {"Link": "https://api.groupexpro.com/gxp/reservations/start/index/11932830/04/22/2021"}
-
-    pprint(g.set_full_info("TBO Full Available".split()))
+    def _alltrue(self): return Series(ones(self.Info.shape[0]), index= self.Info.index, dtype= "bool")
 
 
 

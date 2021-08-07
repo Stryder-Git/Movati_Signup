@@ -1,7 +1,5 @@
 from Getter import Getter
-from pandas import DataFrame as DF, concat, read_csv, Series, to_timedelta
-from numpy import ones
-from json import load, dump
+from pandas import DataFrame as DF, concat, Series, to_timedelta
 
 class Presenter(Getter):
     """This is where all the storing and converting to
@@ -10,41 +8,16 @@ class Presenter(Getter):
     # RESCOLS = Getter.FULLINFO[1:-1]
     RESCOLS = ["uDay", "uTime", "uName"]
     STATUSCOLS = ["uDay", "uTime", "uName", "Status", "SignTime"]
-    INFOLOC = "Data\\Info.csv"
-    AUTOLOC = "Data\\AutoSignUp.json"
-    LISTSLOC = "Data\\Lists.json"
-    FILTERSLOC = "Data\\Filters.json"
+
 
     def __init__(self, set_info= True, set_current_options= True):
         Getter.__init__(self)
-        self.Info = DF(columns= self.FULLINFO)
-        self.Info.set_index("ID", inplace= True)
         if set_info: self.update_basic_info()
-
         self.results_df = DF(columns= self.FULLINFO)
         self.results_txt = ""
         if set_current_options: self.set_results()
-
-        self.AutoSignUp = self.getAuto()
-        self.Lists = self.getLists()
-        self.Filters = self.getFilters()
-
         self.lastfilter = Series()
 
-    def getInfo(self): return read_csv(self.INFOLOC)
-    def saveInfo(self): self.Info.to_csv(self.INFOLOC, index= True)
-    def getAuto(self):
-        with open(self.AUTOLOC, "r") as auto: return load(auto)
-    def saveAuto(self):
-        with open(self.AUTOLOC, "w") as auto: dump(self.AutoSignUp, auto)
-    def getLists(self):
-        with open(self.LISTSLOC, "r") as lists: return load(lists)
-    def saveLists(self):
-        with open(self.LISTSLOC, "w") as lists: dump(self.Lists, lists)
-    def getFilters(self):
-        with open(self.FILTERSLOC, "r") as filters: return load(filters)
-    def saveFilters(self):
-        with open(self.FILTERSLOC, "w") as filters: dump(self.Filters, filters)
 
     def _make_timedelta_col(self, startend):
         startend = startend.str.split("-", expand= True)
@@ -113,9 +86,7 @@ class Presenter(Getter):
         else: self.results_txt = ["nothing found..."]
         return self.results_txt
 
-    def get_class_names(self, refs= None):
-        if refs is None:
-            return self.Info['uName'].unique().tolist()
+    def get_class_names(self): return self.Info['uName'].unique().tolist()
     def get_days(self):
         days = []
         for wkday, date in self.days:
@@ -123,16 +94,11 @@ class Presenter(Getter):
             days.append(f"{wkday} {date}")
         return days
 
-    def _alltrue(self): return Series(ones(self.Info.shape[0]), index= self.Info.index, dtype= "bool")
-    def apply_filter(self, names= None, days= None, favs= None, bl= None, auto= None, basic= None, full= None):
+    def create_filter(self, names= None, days= None, favs= None, bl= None, auto= None, basic= None, full= None):
         """parses the requested filter options.
         If any options werent selected a mask with only true values is generated"""
         # remove All, if that makes the list empty, there is no restriction placed
         # on names or days anyway, and other selection takes precedence
-        if names is self.lastfilter:
-            if self.lastfilter.empty: return self.Info.loc[self._alltrue()]
-            return self.Info.loc[self.lastfilter]
-
         try: names.remove("All")
         except (AttributeError, ValueError): pass
         try: days.remove("All")
@@ -150,7 +116,7 @@ class Presenter(Getter):
         if favs: favs = self.Info["uName"].isin(self.Lists["Favourites"])
         else: favs = self._alltrue()
         if bl: bl = self.Info["uName"].isin(self.Lists["Blacklist"])
-        else: bl = self._alltrue()
+        else: bl = ~self.Info["uName"].isin(self.Lists["Blacklist"])
         if auto: auto = self.Info.index.isin(self.AutoSignUp)
         else: auto = self._alltrue()
 
@@ -159,8 +125,18 @@ class Presenter(Getter):
         elif full and not basic: which = ~basic_cond
         else: which = self._alltrue()
 
-        self.lastfilter = names & days & favs & bl & auto & which
-        return self.Info.loc[self.lastfilter]
+        return names & days & favs & bl & auto & which
+
+    def apply_filter(self, filter):
+        if not isinstance(filter, str):
+            if filter.empty: filter = self._alltrue()
+        else:
+            if filter == "Favourites": filter = self.Info["uName"].isin(filter)
+            elif filter == "AutoSignUp": filter = self.Info.index.isin(filter)
+            else: filter = self.create_filter(self.Filters[filter])
+
+        self.lastfilter = filter
+        return self.Info.loc[filter]
 
     def make_status_response(self, df):
         resp = df[self.STATUSCOLS].to_string(index= False).split("\n")
