@@ -1,8 +1,8 @@
 import unittest as ut
-from unittest.mock import Mock, patch
-from Presenter import Presenter
+from unittest.mock import Mock
+from Movati_SignUp.Presenter import Presenter
 from pandas import read_csv, DataFrame as DF, Series
-from pprint import pprint
+
 
 class Presenter_Tests(ut.TestCase):
     @classmethod
