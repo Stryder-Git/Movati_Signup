@@ -25,10 +25,18 @@ class twdct:
     def __str__(self):
         res = ""
         for key, item in self.a.items(): res+= f"{key} <> {item}\n"
+        if not res: res = "<Empty-TwDct>"
         return res
 
 
 class Getter:
+    """
+    To set up the data:
+        1. Get available days with .set_days()
+
+    """
+
+
     TBO = "TBO"
     FULL = "Full"
     AVAILABLE = "Available"
@@ -72,9 +80,11 @@ class Getter:
         logger.setLevel(INFO)
         return logger
 
-
     def getInfo(self, index_col= "ID"):
-        return read_csv(self.INFOLOC, index_col= index_col, parse_dates= ["dtStart", "dtEnd", "dtSignTime"])
+        info = read_csv(self.INFOLOC, index_col= index_col, parse_dates= ["dtStart", "dtEnd", "dtSignTime"])
+        return info[info.dtStart>= self.today]
+
+
     def saveInfo(self): self.Info.to_csv(self.INFOLOC, index= True)
     def getAuto(self):
         with open(self.AUTOLOC, "r") as auto: return load(auto)
@@ -111,16 +121,15 @@ class Getter:
     def set_days(self):
         # class = "slick-list", or how I would normally do it doesn't work for some reason
         # so I am just iterating over all divs and getting the days from the carousel-items
-        for div in self.Site.find_all("div"):
+        day_nav = self.Site.find(class_= "swiper-wrapper")
+        for div in day_nav.find_all("div", recursive= False):
             try:
-                if "carousel-item" in div["class"]:
+                if "nav" in div["id"]:
                     wkday, month, date = div.text.split()
                     wkdaydate = f"{wkday}{date}"
                     monthdate = f"{month} {date}"
                     self.days[wkdaydate] = monthdate
                     self.dates[wkdaydate] = self._calc_date(monthdate)
-
-                elif "scheduleDay" in div["class"]: break
             except KeyError: pass
 
         return self.days
@@ -144,7 +153,7 @@ class Getter:
             for clss in schedule.find_all("div", recursive= False):
                 if "classRow" in clss["class"]:
                     time_ = clss.find(class_= "schedTime").text
-                    name = clss["class"][2]
+                    name = clss["class"][3]
                     link = clss.find(class_= "schedSignup")
 
                     # A unique id is created, if the same class is encountered,
@@ -226,7 +235,12 @@ class Getter:
 
     def _alltrue(self): return Series(ones(self.Info.shape[0]), index= self.Info.index, dtype= "bool")
 
+if __name__ == '__main__':
 
+    g = Getter(get_site= False)
+    g.Site = g.get()
+    days = g.set_days()
+    print(days)
 
     """
     Start with setting the available dates by parsing

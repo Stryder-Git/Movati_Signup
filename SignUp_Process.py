@@ -73,7 +73,7 @@ class SignUp(Getter):
 
 
 if __name__ == '__main__':
-    print("HEllo World")
+    print("Hello World")
     su = SignUp()
     if su.AutoSignUp:
         signups = su.get_signups()
