@@ -1,9 +1,4 @@
 ID,uDay,uTime,uName,Day,Time,Name,Status,SignTime,dtStart,dtEnd,dtSignTime,Link
-august7saturday9:00am-10:00ammovati-hiit-,Saturday7,9:00am-10:00am,movati-hiit-,,,,,,2021-08-07 09:00:00,2021-08-07 10:00:00,,https://api.groupexpro.com/gxp/reservations/start/index/12363957/08/07/2021
-august7saturday9:30am-10:30ambody-sculpt-e,Saturday7,9:30am-10:30am,body-sculpt-e,,,,,,2021-08-07 09:30:00,2021-08-07 10:30:00,,https://api.groupexpro.com/gxp/reservations/start/index/12343807/08/07/2021
-august7saturday10:00am-11:00ammovati-strong-,Saturday7,10:00am-11:00am,movati-strong-,,,,,,2021-08-07 10:00:00,2021-08-07 11:00:00,,https://api.groupexpro.com/gxp/reservations/start/index/12363961/08/07/2021
-august7saturday11:00am-12:00pmzumbaâ-e,Saturday7,11:00am-12:00pm,zumbaÂ-e,,,,,,2021-08-07 11:00:00,2021-08-07 12:00:00,,https://api.groupexpro.com/gxp/reservations/start/index/12343816/08/07/2021
-august7saturday11:00am-12:00pmmachine-orientation,Saturday7,11:00am-12:00pm,machine-orientation,,,,,,2021-08-07 11:00:00,2021-08-07 12:00:00,,https://api.groupexpro.com/gxp/reservations/start/index/12360053/08/07/2021
 august8sunday9:15am-10:15amspeed-power-e-â,Sunday8,9:15am-10:15am,speed-power-e-Â,,,,,,2021-08-08 09:15:00,2021-08-08 10:15:00,,https://api.groupexpro.com/gxp/reservations/start/index/12343941/08/08/2021
 august8sunday10:00am-11:00amzumbaâ-e,Sunday8,10:00am-11:00am,zumbaÂ-e,,,,,,2021-08-08 10:00:00,2021-08-08 11:00:00,,https://api.groupexpro.com/gxp/reservations/start/index/12349866/08/08/2021
 august8sunday5:00pm-6:00pmmovati-hiit-,Sunday8,5:00pm-6:00pm,movati-hiit-,,,,,,2021-08-08 17:00:00,2021-08-08 18:00:00,,https://api.groupexpro.com/gxp/reservations/start/index/12363965/08/08/2021
@@ -125,3 +120,8 @@ august20friday5:00pm-6:00pm20-20-20-e,Friday20,5:00pm-6:00pm,20-20-20-e,,,,,,202
 august20friday5:00pm-6:00pmpower-flow-ia,Friday20,5:00pm-6:00pm,power-flow-ia,,,,,,2021-08-20 17:00:00,2021-08-20 18:00:00,,https://api.groupexpro.com/gxp/reservations/start/index/12343934/08/20/2021
 august20friday5:30pm-6:30pmspeed-power-e-â,Friday20,5:30pm-6:30pm,speed-power-e-Â,,,,,,2021-08-20 17:30:00,2021-08-20 18:30:00,,https://api.groupexpro.com/gxp/reservations/start/index/12343937/08/20/2021
 august20friday6:30pm-7:30pmzumbaâ-e,Friday20,6:30pm-7:30pm,zumbaÂ-e,,,,,,2021-08-20 18:30:00,2021-08-20 19:30:00,,https://api.groupexpro.com/gxp/reservations/start/index/12349863/08/20/2021
+august21saturday9:00am-10:00ammovati-hiit-,Saturday21,9:00am-10:00am,movati-hiit-,,,,,,2021-08-21 09:00:00,2021-08-21 10:00:00,,https://api.groupexpro.com/gxp/reservations/start/index/12363957/08/21/2021
+august21saturday9:30am-10:30ambody-sculpt-e,Saturday21,9:30am-10:30am,body-sculpt-e,,,,,,2021-08-21 09:30:00,2021-08-21 10:30:00,,https://api.groupexpro.com/gxp/reservations/start/index/12343807/08/21/2021
+august21saturday10:00am-11:00ammovati-strong-,Saturday21,10:00am-11:00am,movati-strong-,,,,,,2021-08-21 10:00:00,2021-08-21 11:00:00,,https://api.groupexpro.com/gxp/reservations/start/index/12363961/08/21/2021
+august21saturday11:00am-12:00pmzumbaâ-e,Saturday21,11:00am-12:00pm,zumbaÂ-e,,,,,,2021-08-21 11:00:00,2021-08-21 12:00:00,,https://api.groupexpro.com/gxp/reservations/start/index/12343816/08/21/2021
+august21saturday11:00am-12:00pmmachine-orientation,Saturday21,11:00am-12:00pm,machine-orientation,,,,,,2021-08-21 11:00:00,2021-08-21 12:00:00,,https://api.groupexpro.com/gxp/reservations/start/index/12360053/08/21/2021

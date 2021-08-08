@@ -45,12 +45,12 @@ class Getter:
     PASSW = "BooandBaby"
     FULLINFO = "ID uDay uTime uName Day Time Name Status SignTime dtStart dtEnd dtSignTime Link".split()
     URL = "https://movatiathletic.com/club-schedules/?club=guelph"
-    INFOLOC = "Data\\Info.csv"
-    AUTOLOC = "Data\\AutoSignUp.json"
-    SIGNEDLOC = "Data\\signedup.txt"
-    LISTSLOC = "Data\\Lists.json"
-    FILTERSLOC = "Data\\Filters.json"
-    LOGLOC = "Data\\Logs"
+    INFOLOC = "..\\Data\\Info.csv"
+    AUTOLOC = "..\\Data\\AutoSignUp.json"
+    SIGNEDLOC = "..\\Data\\signedup.txt"
+    LISTSLOC = "..\\Data\\Lists.json"
+    FILTERSLOC = "..\\Data\\Filters.json"
+    LOGLOC = "..\\Data\\Logs"
 
     @classmethod
     def _get_class_name(cls): return cls.__name__
