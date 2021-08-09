@@ -37,10 +37,10 @@ class Getter:
     """
 
 
-    TBO = "TBO"
-    FULL = "Full"
-    AVAILABLE = "Available"
-    WAITLIST = "Waitlist"
+    TBO = "TBO" # when registration still needs to open
+    FULL = "Full" # when its completely full
+    AVAILABLE = "Available"  # when you can already sign up
+    WAITLIST = "Waitlist"  # when you can wait for a place to open
     USERN = "tung.angela@hotmail.com"
     PASSW = "BooandBaby"
     FULLINFO = "ID uDay uTime uName Day Time Name Status SignTime dtStart dtEnd dtSignTime Link".split()

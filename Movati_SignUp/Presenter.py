@@ -25,6 +25,8 @@ class Presenter(Getter):
         print(choices)
         self.AutoSignUp = concat([self.AutoSignUp, self.Info.loc[choices]], ignore_index= False)
         self.AutoSignUp = self.AutoSignUp.drop_duplicates()
+        self.AutoSignUp = self.AutoSignUp[~self.AutoSignUp.Status.isin([self.FULL])]
+        self.AutoSignUp.loc[self.AutoSignUp.Status.isin([self.WAITLIST, self.AVAILABLE]), "dtSignTime"] = self.today
 
     def _make_timedelta_col(self, startend):
         """ convert am/pm column to timedelta columns (timedelta since midnight)"""
@@ -91,7 +93,7 @@ class Presenter(Getter):
         return full_info
 
     def update_completed_signup(self, completed):
-        self.AutoSignUp = self.AutoSignUp.drop(labels= completed)
+        self.AutoSignUp = self.AutoSignUp[~self.AutoSignUp.index.isin(completed)]
 
     def set_results(self, df= None):
         if df is None: df = self.Info

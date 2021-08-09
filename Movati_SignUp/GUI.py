@@ -88,8 +88,10 @@ def GUI(p):
                     exit()
 
         def close(self):
-            self.socket.shutdown(sk.SHUT_RDWR)
-            self.socket.close()
+            try:
+                self.socket.shutdown(sk.SHUT_RDWR)
+                self.socket.close()
+            except OSError: pass
 
         def get_completed(self):
             print("getting completed")
@@ -130,7 +132,7 @@ def GUI(p):
 
             server.send_update(signups.to_dict())
             server.close()
-
+            break
 
         elif e in ("Favourites", "AutoSignUp"):
             results = p.apply_filter(e)
