@@ -1,4 +1,4 @@
-from Getter import Getter
+from .Getter import Getter
 from pandas import DataFrame as DF, concat, Series, to_timedelta, to_datetime
 
 class Presenter(Getter):
@@ -23,10 +23,19 @@ class Presenter(Getter):
     def add_to_autosignup(self, choices):
         choices = self.hash_choices(choices)
         print(choices)
+        # make sure that you have full info
+        not_full = self.Info.loc[choices, "Status"].isna()
+        if not_full.any():
+            self.update_full_info(not_full[not_full].index)
+
         self.AutoSignUp = concat([self.AutoSignUp, self.Info.loc[choices]], ignore_index= False)
         self.AutoSignUp = self.AutoSignUp.drop_duplicates()
         self.AutoSignUp = self.AutoSignUp[~self.AutoSignUp.Status.isin([self.FULL])]
         self.AutoSignUp.loc[self.AutoSignUp.Status.isin([self.WAITLIST, self.AVAILABLE]), "dtSignTime"] = self.today
+
+    def remove_from_autosignup(self, choices):
+        choices = self.hash_choices(choices)
+        self.AutoSignUp = self.AutoSignUp[~self.AutoSignUp.index.isin(choices)]
 
     def _make_timedelta_col(self, startend):
         """ convert am/pm column to timedelta columns (timedelta since midnight)"""
@@ -108,7 +117,7 @@ class Presenter(Getter):
         else: self.results_txt = ["nothing found..."]
         return self.results_txt
 
-    def make_status_response(self, df):
+    def make_status_text(self, df):
         return self._make_results(df[self.STATUSCOLS])
 
     def get_class_names(self): return self.Info['uName'].unique().tolist()

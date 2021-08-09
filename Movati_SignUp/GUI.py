@@ -1,4 +1,4 @@
-from Presenter import Presenter
+from .Presenter import Presenter
 import PySimpleGUI as sg
 import webbrowser as web
 import socket as sk
@@ -22,7 +22,7 @@ def GUI(p):
     # Data Column
     data = [
         [sg.LB(p.results_txt, s=(60, 25), k="OPTIONS", select_mode="extended")],
-        [sg.B("Open"), sg.B("Get Status"), sg.B("Add to AutoSignUp")]
+        [sg.B("Open"), sg.B("Get Status"), sg.B("Add to AutoSignUp"), sg.B("Remove from AutoSignUp")]
     ]
     Main_Tab = sg.Tab("Main", [[sg.Column(customfilters),sg.VerticalSeparator(), sg.Column(data)]])
 
@@ -48,8 +48,6 @@ def GUI(p):
     def create_status_window(lst):
         return [[sg.LB(lst, s= (60, 10), k= "STATUS", select_mode= "extended")],
                 [sg.B("Open"), sg.B("Add to AutoSignUp"), sg.T(" "*20), sg.B("Close Popup")]]
-#### STARTUP WINDOW
-    def create_startup_window(): pass
 
     sg.theme("DarkBlue17")
     FullW = [[sg.TabGroup([[Main_Tab, Personalize_Tab]])]]
@@ -94,7 +92,7 @@ def GUI(p):
         def get_completed(self):
             print("getting completed")
             length, flag = self.socket.recv(self.SIZE).decode(self.F).split("::")
-            if flag == "CANCEL":
+            if flag.strip() == "CANCEL":
                 print("cancel flag")
                 sg.popup_ok("There seem to be two GUIs trying to connect,"
                             " please use only the first one you opened. (Clicking OK will close the right one)")
@@ -147,7 +145,7 @@ def GUI(p):
             update_main_options(updated_options)
 
             # create and run the pop up showing the requested status
-            resp = p.make_status_response(full_info)
+            resp = p.make_status_text(full_info)
             status_window = sg.Window("Status Request", create_status_window(resp))
             while True:
                 se, sv = status_window.read()
@@ -164,6 +162,9 @@ def GUI(p):
 
         elif e == "Add to AutoSignUp":
             p.add_to_autosignup(v["OPTIONS"])
+
+        elif e == "Remove from AutoSignUp":
+            p.remove_from_autosignup(v["OPTIONS"])
 
         elif e == "SAVE":
             n = v["SAVEAS"]
