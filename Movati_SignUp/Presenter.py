@@ -1,5 +1,5 @@
 from Getter import Getter
-from pandas import DataFrame as DF, concat, Series, to_timedelta
+from pandas import DataFrame as DF, concat, Series, to_timedelta, to_datetime
 
 class Presenter(Getter):
     """This is where all the storing and converting to
@@ -18,28 +18,40 @@ class Presenter(Getter):
         if set_current_options: self.set_results()
         self.lastfilter = Series()
 
+    def hash_choices(self, lst): return [self.hash(*choice.split(maxsplit= 3)[:3]) for choice in lst]
+
+    def add_to_autosignup(self, choices):
+        choices = self.hash_choices(choices)
+        print(choices)
+        self.AutoSignUp = concat([self.AutoSignUp, self.Info.loc[choices]], ignore_index= False)
+        self.AutoSignUp = self.AutoSignUp.drop_duplicates()
 
     def _make_timedelta_col(self, startend):
+        """ convert am/pm column to timedelta columns (timedelta since midnight)"""
         startend = startend.str.split("-", expand= True)
         to_return = []
         for c in startend.columns:
+            # gets the ones after 1pm, which need to be adjusted
             pm = startend[c].str.contains("pm", regex= False) & ~startend[c].str.contains("12:", regex= False)
-            pm = pm.map({True: 12, False: 0}).astype("int32")
+            pm = pm.map({True: 12, False: 0}).astype("int32") # change True to 12 to add it later
+            # extract hours and minutes and remove am/pm
             times = startend[c].str.split(":", expand= True)
             times[1] = times[1].str.replace("am", "", regex= False).str.replace("pm", "", regex= False)
-
+            # convert to int
             times = times.astype("int32")
+            # calculate the amount of minutes since midnight
             td = (times[0] + pm) * 60 + times[1]
             to_return.append(to_timedelta(td, unit= "m"))
         return to_return
 
-    def hash_choices(self, lst): return [self.hash(*choice.split(maxsplit= 3)[:3]) for choice in lst]
 
     def update_dt(self):
+        """make dtStart and dtEnd columns for the classes"""
         start, end = self._make_timedelta_col(self.Info["uTime"])
-        date = self.Info["uDay"].map(self.dates.a)
-        self.Info["dtStart"] = date + start
+        date = self.Info["uDay"].map(self.dates.a) # convert days to dates
+        self.Info["dtStart"] = date + start # add the timedeltas
         self.Info["dtEnd"] = date + end
+        self.Info["dtSignTime"] = to_datetime(self.Info["SignTime"], infer_datetime_format= True)
 
     def update_basic_info(self):
         info = DF(self.set_basic_info().values())
@@ -75,7 +87,11 @@ class Presenter(Getter):
         full_info = DF(full_info.values())
         full_info.set_index("ID", inplace=True)
         self.Info.loc[full_info.index] = full_info
+        self.update_dt()
         return full_info
+
+    def update_completed_signup(self, completed):
+        self.AutoSignUp = self.AutoSignUp.drop(labels= completed)
 
     def set_results(self, df= None):
         if df is None: df = self.Info
@@ -117,9 +133,10 @@ class Presenter(Getter):
         else: favs = self._alltrue()
         if bl: bl = self.Info["uName"].isin(self.Lists["Blacklist"])
         else: bl = ~self.Info["uName"].isin(self.Lists["Blacklist"])
-        if auto: auto = self.Info.index.isin(self.AutoSignUp)
+        if auto: auto = self.Info.index.isin(self.AutoSignUp.index)
         else: auto = self._alltrue()
 
+        # basic/full refer to the amount of information available (status/SignTime gotten or not)
         basic_cond = self.Info["Status"].isna()
         if basic and not full: which = basic_cond
         elif full and not basic: which = ~basic_cond

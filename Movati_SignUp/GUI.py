@@ -1,7 +1,8 @@
 from Presenter import Presenter
 import PySimpleGUI as sg
 import webbrowser as web
-from subprocess import Popen
+import socket as sk
+from json import loads, dumps
 
 def GUI(p):
 #### MAIN WINDOW
@@ -71,10 +72,65 @@ def GUI(p):
         window["pFILTERS"].update(filters)
 
 
+
+    class Server:
+        SIZE= 22
+        F = "utf-8"
+        def __init__(self, connect= True):
+            self.socket = sk.socket(sk.AF_INET, sk.SOCK_STREAM)
+            if connect:
+                try:
+                    print("trying to connect")
+                    self.socket.connect((sk.gethostbyname("MPC"), 1289))
+                    self.send("movati", "")
+                except OSError:
+                    sg.popup_ok("Could not connect to server, make sure laptop is running")
+                    exit()
+
+        def close(self):
+            self.socket.shutdown(sk.SHUT_RDWR)
+            self.socket.close()
+
+        def get_completed(self):
+            print("getting completed")
+            length, flag = self.socket.recv(self.SIZE).decode(self.F).split("::")
+            if flag == "CANCEL":
+                print("cancel flag")
+                sg.popup_ok("There seem to be two GUIs trying to connect,"
+                            " please use only the first one you opened. (Clicking OK will close the right one)")
+                self.close()
+                exit()
+            print("got completed")
+            return loads(self.socket.recv(int(length)).decode(self.F))
+
+        def send(self, flag, msg):
+            msg = msg.encode(self.F)
+            header = f"{len(msg)}::{flag}"
+            msg = f"{header:<{self.SIZE}}".encode(self.F) + msg
+            self.socket.send(msg)
+
+        def send_update(self, data):
+            data = dumps(data)
+            self.send("update", data)
+            print("sent: ", data)
+
+
+    server = Server()
+    completed = server.get_completed()
+    p.update_completed_signup(completed)
+
+
     while True:
         e, v = window.read()
         print(e, v)
-        if e in (sg.WIN_CLOSED, "Quit"): p.save_all(); break
+        if e in (sg.WIN_CLOSED, "Quit"):
+            p.save_all()
+            signups = p.AutoSignUp[["dtSignTime", "Status", "Link"]].sort_values("dtSignTime")
+            signups["dtSignTime"] = signups["dtSignTime"].astype("string")
+
+            server.send_update(signups.to_dict())
+            server.close()
+
 
         elif e in ("Favourites", "AutoSignUp"):
             results = p.apply_filter(e)
@@ -101,15 +157,13 @@ def GUI(p):
                     for link in p.Info.loc[p.hash_choices(sv["STATUS"]), "Link"]:
                         web.open(link)
                 elif se == "Add to AutoSignUp":
-                    p.AutoSignUp.extend(p.hash_choices(sv["STATUS"]))
-                    p.AutoSignUp = list(set(p.AutoSignUp))
-
+                    p.add_to_autosignup(sv["STATUS"])
 
         elif e == "Open":
             for link in p.Info.loc[p.hash_choices(v["OPTIONS"]), "Link"]: web.open(link)
+
         elif e == "Add to AutoSignUp":
-            p.AutoSignUp.extend(p.hash_choices(sv["STATUS"]))
-            p.AutoSignUp = list(set(p.AutoSignUp))
+            p.add_to_autosignup(v["OPTIONS"])
 
         elif e == "SAVE":
             n = v["SAVEAS"]

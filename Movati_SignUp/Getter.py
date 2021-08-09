@@ -46,7 +46,7 @@ class Getter:
     FULLINFO = "ID uDay uTime uName Day Time Name Status SignTime dtStart dtEnd dtSignTime Link".split()
     URL = "https://movatiathletic.com/club-schedules/?club=guelph"
     INFOLOC = "..\\Data\\Info.csv"
-    AUTOLOC = "..\\Data\\AutoSignUp.json"
+    AUTOLOC = "..\\Data\\AutoSignUp.csv"
     SIGNEDLOC = "..\\Data\\signedup.txt"
     LISTSLOC = "..\\Data\\Lists.json"
     FILTERSLOC = "..\\Data\\Filters.json"
@@ -87,14 +87,9 @@ class Getter:
 
     def saveInfo(self): self.Info.to_csv(self.INFOLOC, index= True)
     def getAuto(self):
-        with open(self.AUTOLOC, "r") as auto: return load(auto)
+        return read_csv(self.AUTOLOC, index_col= "ID", parse_dates= ["dtStart","dtEnd","dtSignTime"])
     def saveAuto(self):
-        with open(self.SIGNEDLOC, "r") as signed: signed = signed.readlines()
-        for s in signed:
-            if s in self.AutoSignUp: self.AutoSignUp.remove(s)
-        with open(self.AUTOLOC, "w") as auto: dump(self.AutoSignUp, auto)
-        with open(self.SIGNEDLOC, "w") as signed: signed.write("")
-
+        self.AutoSignUp.to_csv(self.AUTOLOC, index= True)
     def getLists(self):
         with open(self.LISTSLOC, "r") as lists: return load(lists)
     def saveLists(self):
