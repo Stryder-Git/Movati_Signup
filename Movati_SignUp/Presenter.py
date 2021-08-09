@@ -95,16 +95,24 @@ class Presenter(Getter):
     def update_completed_signup(self, completed):
         self.AutoSignUp = self.AutoSignUp[~self.AutoSignUp.index.isin(completed)]
 
+    def _make_results(self, df):
+        txt = df.to_string(index= False).split("\n")
+        txt[0] = txt[0].replace("u", " ", 3)
+        return txt
+
     def set_results(self, df= None):
         if df is None: df = self.Info
         self.results_df = df.reset_index(drop= True).sort_values("dtStart")
         if not self.results_df.empty:
-            self.results_txt = self.results_df[self.RESCOLS].to_string(index= False).split("\n")
-            self.results_txt[0] = self.results_txt[0].replace("u", " ")
+            self.results_txt = self._make_results(self.results_df[self.RESCOLS])
         else: self.results_txt = ["nothing found..."]
         return self.results_txt
 
+    def make_status_response(self, df):
+        return self._make_results(df[self.STATUSCOLS])
+
     def get_class_names(self): return self.Info['uName'].unique().tolist()
+
     def get_days(self):
         days = []
         for wkday, date in self.days:
@@ -156,11 +164,6 @@ class Presenter(Getter):
 
         self.lastfilter = filter
         return self.Info.loc[filter]
-
-    def make_status_response(self, df):
-        resp = df[self.STATUSCOLS].to_string(index= False).split("\n")
-        resp[0] = resp[0].replace("u", " ")
-        return resp
 
 
 

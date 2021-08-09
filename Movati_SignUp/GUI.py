@@ -38,12 +38,10 @@ def GUI(p):
         sg.Column([[sg.T("Blacklist:")],
             [sg.LB(p.Lists["Blacklist"], s= (20, col_height), k= "pBL", select_mode= "extended")],
             [sg.B("Remove", k= "removeBL")]])
-    ],
+        ],
         [sg.Column([[sg.T("Saved Filters:")], [sg.LB(list(p.Filters.keys()), s= (30, col_height), k= "pFILTERS")],
                   [sg.B("Remove", k= "removeFILTER")]])
-    ],
-        [sg.B()]
-
+        ]
     ])
 
 #### STATUS WINDOW
