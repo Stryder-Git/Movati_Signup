@@ -47,7 +47,6 @@ class Getter:
     URL = "https://movatiathletic.com/club-schedules/?club=guelph"
     INFOLOC = ".\\Data\\Info.csv"
     AUTOLOC = ".\\Data\\AutoSignUp.csv"
-    SIGNEDLOC = ".\\Data\\signedup.txt"
     LISTSLOC = ".\\Data\\Lists.json"
     FILTERSLOC = ".\\Data\\Filters.json"
     LOGLOC = ".\\Data\\Logs"
