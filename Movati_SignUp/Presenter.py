@@ -10,12 +10,9 @@ class Presenter(Getter):
     STATUSCOLS = ["uDay", "uTime", "uName", "Status", "SignTime"]
 
 
-    def __init__(self, set_info= True, set_current_options= True):
+    def __init__(self, set_info= True):
         Getter.__init__(self)
         if set_info: self.update_basic_info()
-        self.results_df = DF(columns= self.FULLINFO)
-        self.results_txt = ""
-        if set_current_options: self.set_results()
         self.lastfilter = Series()
 
     def hash_choices(self, lst): return [self.hash(*choice.split(maxsplit= 3)[:3]) for choice in lst]
@@ -101,24 +98,25 @@ class Presenter(Getter):
         self.update_dt()
         return full_info
 
-    def update_completed_signup(self, completed):
-        self.AutoSignUp = self.AutoSignUp[~self.AutoSignUp.index.isin(completed)]
+    def update_autosignup(self, completed, failed):
+        completed = self.AutoSignUp.index.isin(completed)
+        failed = self.AutoSignUp.index.isin(failed)
+        self.AutoSignUp = self.AutoSignUp[~(completed | failed)]
 
-    def _make_results(self, df):
+    def _make_text(self, df):
         txt = df.to_string(index= False).split("\n")
         txt[0] = txt[0].replace("u", " ", 3)
         return txt
 
-    def set_results(self, df= None):
+    def make_results_text(self, df= None):
         if df is None: df = self.Info
-        self.results_df = df.reset_index(drop= True).sort_values("dtStart")
-        if not self.results_df.empty:
-            self.results_txt = self._make_results(self.results_df[self.RESCOLS])
-        else: self.results_txt = ["nothing found..."]
-        return self.results_txt
+        results_df = df.reset_index(drop= True).sort_values("dtStart")
+        if not results_df.empty:
+            return self._make_text(results_df[self.RESCOLS])
+        else: return ["nothing found..."]
 
     def make_status_text(self, df):
-        return self._make_results(df[self.STATUSCOLS])
+        return self._make_text(df[self.STATUSCOLS])
 
     def get_class_names(self): return self.Info['uName'].unique().tolist()
 

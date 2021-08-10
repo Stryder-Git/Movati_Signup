@@ -1,5 +1,3 @@
-from .GUI import GUI
+from .GUI import GUI, Dobby
 from .Presenter import Presenter
 
-def start_gui():
-    GUI(Presenter())

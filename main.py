@@ -1,4 +1,5 @@
-from Movati_SignUp import start_gui
+from Movati_SignUp import GUI, Dobby, Presenter
 
-start_gui()
+gui = GUI(Presenter(), Dobby())
+gui.launch_main()
 
