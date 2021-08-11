@@ -28,7 +28,7 @@ class Dobby:
         except OSError:
             pass
 
-    def get_completed(self):
+    def get_completed_failed(self):
         print("getting completed")
         length, flag = self.socket.recv(self.SIZE).decode(self.F).split("::")
         if flag.strip() == "CANCEL":
@@ -37,12 +37,12 @@ class Dobby:
                         " please use only the first one you opened. (Clicking OK will close the right one)")
             self.close()
             exit()
-        return loads(self.socket.recv(int(length)).decode(self.F))
+        completed = loads(self.socket.recv(int(length)).decode(self.F))
 
-    def get_failed(self):
         print("getting failed")
         length, flag = self.socket.recv(self.SIZE).decode(self.F).split("::")
-        return loads(self.socket.recv(int(length)).decode(self.F))
+        failed = loads(self.socket.recv(int(length)).decode(self.F))
+        return completed, failed
 
     def send(self, flag, msg):
         msg = msg.encode(self.F)
@@ -68,16 +68,17 @@ class GUI:
         sg.theme(self.THEME)
 
         self.s.connect()
+        self.update_completed_failed_autosignups()
+        self.create_main_window()
 
-        completed = self.s.get_completed()
-        failed = self.s.get_failed()
+    def update_completed_failed_autosignups(self):
+        completed, failed = self.s.get_completed_failed()
         if failed:
             have_failed = self.p.AutoSignUp.index.isin(failed)
             failed_text = self.p.make_status_text(self.p.AutoSignUp[have_failed])
             self.show_failed_window(failed_text)
 
         self.p.update_autosignup(completed, failed)
-        self.create_main_window()
 
     def create_main_window(self):
         #### MAIN WINDOW
@@ -146,8 +147,6 @@ class GUI:
             elif se == "Open":
                 for link in self.p.Info.loc[self.p.hash_choices(sv["STATUS"]), "Link"]:
                     web.open(link)
-            elif se == "Add to AutoSignUp":
-                self.p.add_to_autosignup(sv["STATUS"])
 
 
     #### STATUS WINDOW
@@ -165,7 +164,6 @@ class GUI:
                     web.open(link)
             elif se == "Add to AutoSignUp":
                 self.p.add_to_autosignup(sv["STATUS"])
-
 
 
     def update_personalize_list(self):
@@ -197,6 +195,8 @@ class GUI:
                 signups["dtSignTime"] = signups["dtSignTime"].astype("string")
 
                 self.s.send_update(signups.to_dict())
+                self.update_completed_failed_autosignups()
+                self.p.save_all()
                 self.s.close()
                 break
 
