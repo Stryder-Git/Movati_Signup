@@ -1,59 +1,6 @@
-from .Presenter import Presenter
 import PySimpleGUI as sg
 import webbrowser as web
-import socket as sk
-from json import loads, dumps, load
-
-
-class Dobby:
-    SIZE = 22
-    F = "utf-8"
-
-    def __init__(self, connect=True):
-        self.socket = sk.socket(sk.AF_INET, sk.SOCK_STREAM)
-
-    def connect(self):
-        try:
-            print("trying to connect")
-            self.socket.connect((sk.gethostbyname("MPC"), 1289))
-            self.send("movati", "")
-        except OSError:
-            sg.popup_ok("Could not connect to server, make sure laptop is running")
-            exit()
-
-    def close(self):
-        try:
-            self.socket.shutdown(sk.SHUT_RDWR)
-            self.socket.close()
-        except OSError:
-            pass
-
-    def get_completed_failed(self):
-        print("getting completed")
-        length, flag = self.socket.recv(self.SIZE).decode(self.F).split("::")
-        if flag.strip() == "CANCEL":
-            print("cancel flag")
-            sg.popup_ok("There seem to be two GUIs trying to connect,"
-                        " please use only the first one you opened. (Clicking OK will close the right one)")
-            self.close()
-            exit()
-        completed = loads(self.socket.recv(int(length)).decode(self.F))
-
-        print("getting failed")
-        length, flag = self.socket.recv(self.SIZE).decode(self.F).split("::")
-        failed = loads(self.socket.recv(int(length)).decode(self.F))
-        return completed, failed
-
-    def send(self, flag, msg):
-        msg = msg.encode(self.F)
-        header = f"{len(msg)}::{flag}"
-        msg = f"{header:<{self.SIZE}}".encode(self.F) + msg
-        self.socket.send(msg)
-
-    def send_update(self, data):
-        data = dumps(data)
-        self.send("update", data)
-        print("sent: ", data)
+from json import load
 
 
 class GUI:
