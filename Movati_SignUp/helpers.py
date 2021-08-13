@@ -42,7 +42,7 @@ class Dobby:
         for i in range(1, num_updates + 1):
             print(f"installing update number {i} of {num_updates}")
             length, filename = self.read().split("::")
-            contents = self.read(length)
+            contents = self.read(int(length))
             install_update(filename.strip(), contents)
 
         if num_updates:
