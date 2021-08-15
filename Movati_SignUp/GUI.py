@@ -14,8 +14,8 @@ class GUI:
         self.THEME = settings["default_theme"]
         sg.theme(self.THEME)
 
-        self.s.connect()
-        self.update_completed_failed_autosignups()
+        self.s.connect()   ####
+        self.update_completed_failed_autosignups() ######
         self.create_main_window()
 
     def update_completed_failed_autosignups(self):
@@ -138,13 +138,13 @@ class GUI:
             print(e, v)
             if e in (sg.WIN_CLOSED, "Quit"):
                 self.p.save_all()
-                signups = self.p.AutoSignUp[["dtSignTime", "Status", "Link"]].sort_values("dtSignTime")
-                signups["dtSignTime"] = signups["dtSignTime"].astype("string")
+                signups = self.p.AutoSignUp[["dtSignTime", "Status", "Link"]].sort_values("dtSignTime") ##########
+                signups["dtSignTime"] = signups["dtSignTime"].astype("string")  ##########
 
-                self.s.send_update(signups.to_dict())
-                self.update_completed_failed_autosignups()
-                self.p.save_all()
-                self.s.close()
+                self.s.send_update(signups.to_dict())   ##########
+                self.update_completed_failed_autosignups()  ##########
+                self.p.save_all()   ##########
+                self.s.close()  ##########
                 break
 
             elif e in ("Favourites", "AutoSignUp"):
