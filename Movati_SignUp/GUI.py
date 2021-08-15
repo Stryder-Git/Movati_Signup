@@ -1,24 +1,31 @@
 import PySimpleGUI as sg
 import webbrowser as web
-from json import load
-from threading import Thread
+from json import load, dump
 
 
 
 class GUI:
+    _gui_settings_loc = ".\\Data\\gui_settings.json"
 
     def __init__(self, p, s):
         self.p = p
         self.s = s
 
-        with open(".\\Data\\gui_settings.json", "r") as settings:
-            settings = load(settings)
-        self.THEME = settings["default_theme"]
+        self.settings = self.get_settings()
+        self.THEME = self.settings["default_theme"]
         sg.theme(self.THEME)
 
-        # self.s.connect()   ####
-        # self.update_completed_failed_autosignups() ######
+        self.s.connect()   ####
+        self.update_completed_failed_autosignups() ######
         self.create_main_window()
+
+    def get_settings(self):
+        with open(self._gui_settings_loc, "r") as settings:
+            return load(settings)
+    def save_settings(self):
+        with open(self._gui_settings_loc, "w") as settings:
+            dump(self.settings, settings)
+
 
     def update_completed_failed_autosignups(self):
         completed, failed = self.s.get_completed_failed()
@@ -69,7 +76,8 @@ class GUI:
                 [sg.Column([[sg.T("Saved Filters:")], [sg.LB(list(self.p.Filters.keys()), s= (30, col_height), k= "pFILTERS")],
                           [sg.B("Remove", k= "removeFILTER")]]),
                  sg.Column([[sg.T("Change the theme:\n")],
-                           [sg.Button("Launch Theme Changer")]])
+                           [sg.Button("Launch Theme Changer")],
+                            [sg.T(f"Your current theme: \n{self.THEME}")]])
                 ]
             ])
 
@@ -77,30 +85,51 @@ class GUI:
             return self.window
 
     def change_theme(self, theme= None):
+        if theme is None: return
         self.window.close()
-        sg.theme(theme or self.THEME)
+        self.THEME = theme
+        self.settings["default_theme"] = self.THEME
+        sg.theme(self.THEME)
         self.create_main_window()
 
     def launch_theme_changer(self):
-        layout = [
-            [sg.T("Choose a theme:")],
-            [sg.LB(sg.theme_list(), s= (12, 12), k= "THEME", select_mode= "single")],
-            [sg.B("Try it"), sg.B("Choose it")], [sg.B("Close Popup")]
-        ]
+        def create_tabs(current_theme):
+            choose_tab = sg.Tab("Choose", [
+                [sg.T("Choose a theme:")],
+                [sg.LB(sg.theme_list(), s= (20, 12), default_values= [current_theme],
+                       k= "THEME", select_mode= "single")],
+                [sg.T(f"Current theme:\n\n{current_theme}")],
+                [sg.B("Try it"), sg.B("Choose it")], [sg.B("Close Popup")]
+            ])
+            nothing_tab = sg.Tab("Nothing", [
+                [sg.T("Just to see the color of tabs...")]
+            ])
+            return [[choose_tab, nothing_tab]]
 
-        def _change():
-            theme_changer = sg.Window("Theme Changer", layout, grab_anywhere= True)
-            while True:
-                se, sv = theme_changer.read()
-                print(se, sv)
-                if se in (sg.WIN_CLOSED, "Close Popup"):
-                    theme_changer.close();break
+        theme_changer = sg.Window("Theme Chooser", [[sg.TabGroup(create_tabs(self.THEME))]])
+        theme = self.THEME
+        while True:
+            se, sv = theme_changer.read()
+            print(se, sv)
+            if se in (sg.WIN_CLOSED, "Close Popup"):
+                sg.theme(self.THEME)
+                break
 
-                elif se == "Try it":
-                    print("\nTYRYING IT:  ", sv["THEME"])
-                    break
+            elif se == "Try it":
+                theme = sv['THEME'][0]
+                print(f"\nTYRYING IT:  {theme}")
+                theme_changer.close()
+                sg.theme(theme)
+                theme_changer = sg.Window("Theme Chooser", [[sg.TabGroup(create_tabs(theme))]])
 
-        Thread(target= _change, daemon= True).start()
+            elif se == "Choose it":
+                print(f"\nCHOOSING IT:  {theme}")
+                self.change_theme(theme)
+                break
+
+        theme_changer.close()
+
+
 
     def show_failed_window(self, failed):
         layout = [
@@ -162,13 +191,14 @@ class GUI:
             print(e, v)
             if e in (sg.WIN_CLOSED, "Quit"):
                 self.p.save_all()
-                # signups = self.p.AutoSignUp[["dtSignTime", "Status", "Link"]].sort_values("dtSignTime") ##########
-                # signups["dtSignTime"] = signups["dtSignTime"].astype("string")  ##########
-                #
-                # self.s.send_update(signups.to_dict())   ##########
-                # self.update_completed_failed_autosignups()  ##########
-                # self.p.save_all()   ##########
-                # self.s.close()  ##########
+                self.save_settings()
+                signups = self.p.AutoSignUp[["dtSignTime", "Status", "Link"]].sort_values("dtSignTime") ##########
+                signups["dtSignTime"] = signups["dtSignTime"].astype("string")  ##########
+
+                self.s.send_update(signups.to_dict())   ##########
+                self.update_completed_failed_autosignups()  ##########
+                self.p.save_all()   ##########
+                self.s.close()  ##########
                 break
 
             elif e in ("Favourites", "AutoSignUp"):
