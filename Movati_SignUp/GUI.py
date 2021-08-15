@@ -1,6 +1,8 @@
 import PySimpleGUI as sg
 import webbrowser as web
 from json import load
+from threading import Thread
+
 
 
 class GUI:
@@ -14,8 +16,8 @@ class GUI:
         self.THEME = settings["default_theme"]
         sg.theme(self.THEME)
 
-        self.s.connect()   ####
-        self.update_completed_failed_autosignups() ######
+        # self.s.connect()   ####
+        # self.update_completed_failed_autosignups() ######
         self.create_main_window()
 
     def update_completed_failed_autosignups(self):
@@ -65,7 +67,9 @@ class GUI:
                     [sg.B("Remove", k= "removeBL")]])
                 ],
                 [sg.Column([[sg.T("Saved Filters:")], [sg.LB(list(self.p.Filters.keys()), s= (30, col_height), k= "pFILTERS")],
-                          [sg.B("Remove", k= "removeFILTER")]])
+                          [sg.B("Remove", k= "removeFILTER")]]),
+                 sg.Column([[sg.T("Change the theme:\n")],
+                           [sg.Button("Launch Theme Changer")]])
                 ]
             ])
 
@@ -77,6 +81,26 @@ class GUI:
         sg.theme(theme or self.THEME)
         self.create_main_window()
 
+    def launch_theme_changer(self):
+        layout = [
+            [sg.T("Choose a theme:")],
+            [sg.LB(sg.theme_list(), s= (12, 12), k= "THEME", select_mode= "single")],
+            [sg.B("Try it"), sg.B("Choose it")], [sg.B("Close Popup")]
+        ]
+
+        def _change():
+            theme_changer = sg.Window("Theme Changer", layout, grab_anywhere= True)
+            while True:
+                se, sv = theme_changer.read()
+                print(se, sv)
+                if se in (sg.WIN_CLOSED, "Close Popup"):
+                    theme_changer.close();break
+
+                elif se == "Try it":
+                    print("\nTYRYING IT:  ", sv["THEME"])
+                    break
+
+        Thread(target= _change, daemon= True).start()
 
     def show_failed_window(self, failed):
         layout = [
@@ -138,13 +162,13 @@ class GUI:
             print(e, v)
             if e in (sg.WIN_CLOSED, "Quit"):
                 self.p.save_all()
-                signups = self.p.AutoSignUp[["dtSignTime", "Status", "Link"]].sort_values("dtSignTime") ##########
-                signups["dtSignTime"] = signups["dtSignTime"].astype("string")  ##########
-
-                self.s.send_update(signups.to_dict())   ##########
-                self.update_completed_failed_autosignups()  ##########
-                self.p.save_all()   ##########
-                self.s.close()  ##########
+                # signups = self.p.AutoSignUp[["dtSignTime", "Status", "Link"]].sort_values("dtSignTime") ##########
+                # signups["dtSignTime"] = signups["dtSignTime"].astype("string")  ##########
+                #
+                # self.s.send_update(signups.to_dict())   ##########
+                # self.update_completed_failed_autosignups()  ##########
+                # self.p.save_all()   ##########
+                # self.s.close()  ##########
                 break
 
             elif e in ("Favourites", "AutoSignUp"):
@@ -203,6 +227,8 @@ class GUI:
                 for f in v["pFILTERS"]: del self.p.Filters[f]
                 self.update_filters()
 
+            elif e == "Launch Theme Changer":
+                self.launch_theme_changer()
 
         self.window.close()
 
