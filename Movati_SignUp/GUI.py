@@ -191,6 +191,7 @@ class GUI:
         self.window["FILTERS"].update(values= filters)
         self.window["pFILTERS"].update(filters)
 
+
     def launch_main(self):
         while True:
             e, v = self.window.read()
@@ -243,7 +244,13 @@ class GUI:
 
             elif e in ("addFAV", "addBL"):
                 lst = "Favourites" if e == "addFAV" else "Blacklist"
-                for choice in v["pNAME"]: self.p.Lists[lst].append(choice)
+                other = "Blacklist" if e =="addFav" else "Favourites"
+
+                for choice in v["pNAME"]:
+                    self.p.Lists[lst].append(choice)
+                    try: self.p.Lists[other].remove(choice)
+                    except ValueError: pass
+
                 self.update_personalize_list()
 
             elif e in ("removeFAV", "removeBL"):
