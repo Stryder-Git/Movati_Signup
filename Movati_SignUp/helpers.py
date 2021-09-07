@@ -61,10 +61,12 @@ class Dobby:
         print("getting completed")
         length, flag = self.read().split("::")
         completed = loads(self.read(int(length)))
+        print(completed)
 
         print("getting failed")
         length, flag = self.read().split("::")
         failed = loads(self.read(int(length)))
+        print(failed)
         return completed, failed
 
     def make_msg(self, flag, msg):
@@ -116,6 +118,3 @@ class Update_Installer:
         print("update installed")
 
 install_update = Update_Installer()
-
-
-

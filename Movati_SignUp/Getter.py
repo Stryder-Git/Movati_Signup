@@ -195,7 +195,16 @@ class Getter:
         """should get a list of keys (tuples) for the class_links dct"""
         to_return = {}
         for id_ in ids:
-            link = self.Raw_Info[id_]["Link"]
+            try:
+                link = self.Raw_Info[id_]["Link"]
+            except KeyError as e:
+                print(f"{id_} not in the raw_info dictionary for some reason")
+                print(e)
+                continue
+            if link is None:
+                print(f"{id_} 's link is None.")
+                continue
+                      
             site= self.login_get(link)
             self.Raw_Info[id_].update(dict(
                                    Name= " ".join(site.find("h2").text.split()[:-3]),
@@ -224,7 +233,7 @@ class Getter:
                     info["Status"] = self.WAITLIST; info["SignTime"] = None
 
             self.Raw_Info[id_] = info
-            to_return[id_] = info
+            to_return[id_] = info    
         return to_return
 
     def _alltrue(self): return Series(ones(self.Info.shape[0]), index= self.Info.index, dtype= "bool")

@@ -30,6 +30,7 @@ class GUI:
     def update_completed_failed_autosignups(self):
         completed, failed = self.s.get_completed_failed()
         if failed:
+            print("received failed")
             have_failed = self.p.AutoSignUp.index.isin(failed)
             failed_text = self.p.make_status_text(self.p.AutoSignUp[have_failed])
             self.show_failed_window(failed_text)
@@ -261,29 +262,3 @@ class GUI:
                 self.launch_theme_changer()
 
         self.window.close()
-
-
-
-if __name__ == '__main__':
-    pass
-    """Layout:
-    FULL Window:
-    Filter
-    -> type of class/day/onautosignup/favourites
-    -> only basic/also full
-    -> saved filters
-    Full info
-    -> Select classes to put on AutoSignUp
-    Basic Info
-    -> Select classes to get FullInfo from
-    
-    WAITING Window:
-    Filter 
-    -> type of class/day
-    Classes on AutoSignUp
-    -> Select to cancel/update status
-    
-    Settings Window:
-    change start up filter
-     
-    """

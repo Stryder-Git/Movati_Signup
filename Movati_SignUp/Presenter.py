@@ -1,5 +1,6 @@
 from .Getter import Getter
 from pandas import DataFrame as DF, concat, Series, to_timedelta, to_datetime
+from pprint import pprint
 
 class Presenter(Getter):
     """This is where all the storing and converting to
@@ -26,9 +27,10 @@ class Presenter(Getter):
             self.update_full_info(not_full[not_full].index)
 
         self.AutoSignUp = concat([self.AutoSignUp, self.Info.loc[choices]], ignore_index= False)
-        self.AutoSignUp = self.AutoSignUp.drop_duplicates()
+        self.AutoSignUp = self.AutoSignUp.drop_duplicates().dropna(subset= ["Status"])
         self.AutoSignUp = self.AutoSignUp[~self.AutoSignUp.Status.isin([self.FULL])]
         self.AutoSignUp.loc[self.AutoSignUp.Status.isin([self.WAITLIST, self.AVAILABLE]), "dtSignTime"] = self.today
+        self.AutoSignUp.loc[self.AutoSignUp.dtSignTime.isna(), "dtSignTime"] = self.today
 
     def remove_from_autosignup(self, choices):
         choices = self.hash_choices(choices)
@@ -63,6 +65,8 @@ class Presenter(Getter):
 
     def update_basic_info(self):
         info = DF(self.set_basic_info().values())
+        if info.empty: return self.Info
+        
         info.set_index("ID", inplace= True)
 
         # remove the ones that are already in the Info DF,
@@ -92,10 +96,17 @@ class Presenter(Getter):
 
     def update_full_info(self, ids):
         full_info = self.set_full_info(ids)
-        full_info = DF(full_info.values())
+        print(full_info.keys())
+        pprint(full_info)
+        
+        if not full_info:
+            full_info = DF(columns= self.FULLINFO)
+        else:
+            full_info = DF(full_info.values())
+            
         full_info.set_index("ID", inplace=True)
         self.Info.loc[full_info.index] = full_info
-        self.update_dt()
+        self.update_dt()    
         return full_info
 
     def update_autosignup(self, completed, failed):
