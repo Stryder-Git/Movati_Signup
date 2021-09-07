@@ -116,6 +116,3 @@ class Update_Installer:
         print("update installed")
 
 install_update = Update_Installer()
-
-
-

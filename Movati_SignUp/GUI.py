@@ -22,12 +22,9 @@ class GUI:
         # self.update_completed_failed_autosignups() ######
         self.create_main_window()
 
-
-
     def get_settings(self):
         with open(self._gui_settings_loc, "r") as settings:
             return load(settings)
-
     def save_settings(self):
         with open(self._gui_settings_loc, "w") as settings:
             dump(self.settings, settings)
@@ -98,8 +95,6 @@ class GUI:
         self.save_settings()
         self.window.close()
         self.create_main_window()
-
-
 
     def change_theme(self, theme= None):
         if theme is None: return

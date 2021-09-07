@@ -196,7 +196,16 @@ class Getter:
         """should get a list of keys (tuples) for the class_links dct"""
         to_return = {}
         for id_ in ids:
-            link = self.Raw_Info[id_]["Link"]
+            try:
+                link = self.Raw_Info[id_]["Link"]
+            except KeyError as e:
+                print(f"{id_} not in the raw_info dictionary for some reason")
+                print(e)
+                continue
+            if link is None:
+                print(f"{id_} 's link is None.")
+                continue
+
             site= self.login_get(link)
             self.Raw_Info[id_].update(dict(
                                    Name= " ".join(site.find("h2").text.split()[:-3]),
