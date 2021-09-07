@@ -17,29 +17,6 @@ class Presenter(Getter):
         self.lastfilter = Series()
         self._times = self.create_time_list()
 
-    def _split(self, s):
-        s = s.split()
-        uday, utime = s[:2]
-        return uday, utime, " ".join(s[2:])
-
-    def hash_choices(self, lst):
-        return [self.hash(*self._split(choice)) for choice in lst]
-
-    def add_to_autosignup(self, choices):
-        choices = self.hash_choices(choices)
-        # make sure that you have full info
-        not_full = self.Info.loc[choices, "Status"].isna()
-        if not_full.any():
-            self.update_full_info(not_full[not_full].index)
-
-        self.AutoSignUp = concat([self.AutoSignUp, self.Info.loc[choices]], ignore_index= False)
-        self.AutoSignUp = self.AutoSignUp.drop_duplicates()
-        self.AutoSignUp = self.AutoSignUp[~self.AutoSignUp.Status.isin([self.FULL])]
-        self.AutoSignUp.loc[self.AutoSignUp.Status.isin([self.WAITLIST, self.AVAILABLE]), "dtSignTime"] = self.today
-
-    def remove_from_autosignup(self, choices):
-        choices = self.hash_choices(choices)
-        self.AutoSignUp = self.AutoSignUp[~self.AutoSignUp.index.isin(choices)]
 
     def _make_timedelta_col(self, startend):
         """ convert am/pm column to timedelta columns (timedelta since midnight)"""
@@ -104,13 +81,38 @@ class Presenter(Getter):
         self.update_dt()
         return full_info
 
+    def _split(self, s):
+        s = s.split()
+        uday, utime = s[:2]
+        return uday, utime, " ".join(s[2:])
+
+    def hash_choices(self, lst):
+        return [self.hash(*self._split(choice)) for choice in lst]
+
+    def add_to_autosignup(self, choices):
+        choices = self.hash_choices(choices)
+        # make sure that you have full info
+        not_full = self.Info.loc[choices, "Status"].isna()
+        if not_full.any():
+            self.update_full_info(not_full[not_full].index)
+
+        self.AutoSignUp = concat([self.AutoSignUp, self.Info.loc[choices]], ignore_index= False)
+        self.AutoSignUp = self.AutoSignUp.drop_duplicates()
+        self.AutoSignUp = self.AutoSignUp[~self.AutoSignUp.Status.isin([self.FULL])]
+        self.AutoSignUp.loc[self.AutoSignUp.Status.isin([self.WAITLIST, self.AVAILABLE]), "dtSignTime"] = self.today
+
+    def remove_from_autosignup(self, choices):
+        choices = self.hash_choices(choices)
+        self.AutoSignUp = self.AutoSignUp[~self.AutoSignUp.index.isin(choices)]
+
+
     def update_autosignup(self, completed, failed):
         completed = self.AutoSignUp.index.isin(completed)
         failed = self.AutoSignUp.index.isin(failed)
         self.AutoSignUp = self.AutoSignUp[~(completed | failed)]
 
     def _make_text(self, df):
-        txt = df.to_string(index= False).split("\n")
+        txt = df.to_string(index= False, col_space= 20, justify= "left").split("\n")
         txt[0] = txt[0].replace("u", " ", 3)
         return txt
 
@@ -134,8 +136,9 @@ class Presenter(Getter):
         return days
 
 
+
     def create_time_list(self):
-        times = [f"{'0' if i < 10 else ''}{i}:00 {'a' if i < 12 else 'p'}m" for i in range(24)]
+        times = [f"{'0' if i < 10 else ''}{i}:00 {'a' if i < 12 else 'p'}m" for i in range(3, 24)]
         x = times.index("13:00 pm")
         adj = [s.replace(s.split(":")[0], str(int(s.split(":")[0]) - 12)) for s in times[x:]]
         return [*times[:x], *adj]
@@ -151,10 +154,8 @@ class Presenter(Getter):
         If any options werent selected a mask with only true values is generated"""
         # remove All, if that makes the list empty, there is no restriction placed
         # on names or days anyway, and other selection takes precedence
-        for parameter in (days, start, end):
-            try: parameter.remove("All")
-            except (AttributeError, ValueError): pass
-
+        try: days.remove("All")
+        except (AttributeError, ValueError): pass
 
         # if names or days are empty, select all, else make condition
         if days:
