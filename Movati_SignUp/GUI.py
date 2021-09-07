@@ -13,11 +13,16 @@ class GUI:
 
         self.settings = self.get_settings()
         self.THEME = self.settings["default_theme"]
+        self.DEF_START= self.settings["default_start"]
+        self.DEF_END = self.settings["default_end"]
+
         sg.theme(self.THEME)
 
         # self.s.connect()   ####
         # self.update_completed_failed_autosignups() ######
         self.create_main_window()
+
+
 
     def get_settings(self):
         with open(self._gui_settings_loc, "r") as settings:
@@ -43,15 +48,19 @@ class GUI:
             # Filter Column
             self.customfilters = [
                 [sg.T("Time between: ")],
-                [sg.DD(self.p._times, k= "START"), sg.T("and"), sg.DD(self.p._times, k= "END")],
+                [sg.DD(self.p._times, k= "START", default_value= self.DEF_START), sg.T("and"),
+                 sg.DD(self.p._times, k= "END", default_value= self.DEF_END)],
                 [sg.T("Day:  ")],
                 [sg.LB(["All"]+self.p.get_days(), k= "DAYS", s= (25, 10), select_mode= "extended")],
                 [sg.CB("Favourites", k= "FAV", default= True)], [sg.CB("AutoSignUp", k= "AUTO")],
                 [sg.B("Filter")]
             ]
+
+            df = self.p.apply_filter(self.p.create_filter(
+                favs=True, start=self.DEF_START, end=self.DEF_END))
             # Data Column
             self.data = [
-                [sg.LB(self.p.make_results_text(), s=(60, 25), k="OPTIONS", select_mode="extended")],
+                [sg.LB(self.p.make_results_text(df), s=(60, 25), k="OPTIONS", select_mode="extended")],
                 [sg.B("Open"), sg.B("Get Status"), sg.B("Add to AutoSignUp"), sg.B("Remove from AutoSignUp")]
             ]
             self.Main_Tab = sg.Tab("Main", [[sg.Column(self.customfilters),
@@ -71,8 +80,10 @@ class GUI:
                     [sg.LB(self.p.Lists["Blacklist"], s= (20, col_height), k= "pBL", select_mode= "extended")],
                     [sg.B("Remove", k= "removeBL")]])
                 ],
-                [sg.Column([[sg.T("Saved Filters:")], [sg.LB(list(self.p.Filters.keys()), s= (30, col_height), k= "pFILTERS")],
-                          [sg.B("Remove", k= "removeFILTER")]]),
+                [sg.Column([[sg.T("Default time between:")],
+                             [sg.DD(self.p._times, k="pSTART", default_value= self.DEF_START), sg.T("and"),
+                              sg.DD(self.p._times, k="pEND", default_value= self.DEF_END)],
+                            [sg.B("Save default", k= "pSAVETIME")]]),
                  sg.Column([[sg.T("Change the theme:\n")],
                            [sg.Button("Launch Theme Changer")],
                             [sg.T(f"Your current theme: \n{self.THEME}")]])
@@ -81,6 +92,15 @@ class GUI:
 
             self.window = sg.Window("Movati", [[sg.TabGroup([[self.Main_Tab, self.Personalize_Tab]])]])
             return self.window
+
+    def save_default_time(self, start, end):
+        self.DEF_START = self.settings["default_start"] = start
+        self.DEF_END = self.settings["default_end"] = end
+        self.save_settings()
+        self.window.close()
+        self.create_main_window()
+
+
 
     def change_theme(self, theme= None):
         if theme is None: return
@@ -239,6 +259,9 @@ class GUI:
             elif e == "removeFILTER":
                 for f in v["pFILTERS"]: del self.p.Filters[f]
                 self.update_filters()
+
+            elif e == "pSAVETIME":
+                self.save_default_time(v["pSTART"], v["pEND"])
 
             elif e == "Launch Theme Changer":
                 self.launch_theme_changer()
