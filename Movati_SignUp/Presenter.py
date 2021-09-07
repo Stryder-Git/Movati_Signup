@@ -175,12 +175,13 @@ class Presenter(Getter):
         when = timed.ge(start) & timed.lt(end)
 
         # use lists, or autosignup to filter the index if they were selected
+        bl = ~self.Info["uName"].isin(self.Lists["Blacklist"])
         if favs: favs = self.Info["uName"].isin(self.Lists["Favourites"])
         else: favs = self._alltrue()
         if auto: auto = self.Info.index.isin(self.AutoSignUp.index)
         else: auto = self._alltrue()
 
-        return days & when & favs & auto
+        return days & when & bl & favs & auto
 
     def apply_filter(self, filter):
         if filter.empty: filter = self._alltrue()
