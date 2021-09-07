@@ -79,7 +79,6 @@ class Presenter(Getter):
     def update_full_info(self, ids):
         full_info = self.set_full_info(ids)
         print(full_info.keys())
-        pprint(full_info)
 
         if not full_info:
             full_info = DF(columns= self.FULLINFO)
@@ -145,8 +144,6 @@ class Presenter(Getter):
             days.append(f"{wkday} {date}")
         return days
 
-
-
     def create_time_list(self):
         times = [f"{'0' if i < 10 else ''}{i}:00 {'a' if i < 12 else 'p'}m" for i in range(3, 24)]
         x = times.index("13:00 pm")
@@ -167,7 +164,7 @@ class Presenter(Getter):
         try: days.remove("All")
         except (AttributeError, ValueError): pass
 
-        # if names or days are empty, select all, else make condition
+        # if days are empty, select all, else make condition
         if days:
             days = [f"{d.split()[0]}{d.split()[-1]}" for d in days]
             days = self.Info["uDay"].isin(days)
@@ -178,7 +175,6 @@ class Presenter(Getter):
         end = to_timedelta(24, unit= "H") if end is None else self._ampmtotd(end)
         timed = self.Info.dtStart - self.Info.dtStart.dt.normalize()
         when = timed.ge(start) & timed.lt(end)
-
 
         # use lists, or autosignup to filter the index if they were selected
         if favs: favs = self.Info["uName"].isin(self.Lists["Favourites"])
