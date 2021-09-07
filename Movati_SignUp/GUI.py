@@ -3,9 +3,9 @@ import webbrowser as web
 from json import load, dump
 
 
-
 class GUI:
     _gui_settings_loc = ".\\Data\\gui_settings.json"
+
 
     def __init__(self, p, s):
         self.p = p
@@ -42,15 +42,12 @@ class GUI:
             ### Main Tab
             # Filter Column
             self.customfilters = [
-                [sg.T("Name: "), sg.T(" "*18), sg.T("Day:  ")],
-                [sg.LB(["All"]+self.p.get_class_names(), k= "NAME", s= (16, 10), select_mode= "extended"),
-                                sg.LB(["All"]+self.p.get_days(), k= "DAYS", s= (16, 10), select_mode= "extended")],
-                [sg.CB("Favourites", k= "FAV")], [sg.CB("Blacklist", k= "BL")], [sg.CB("AutoSignUp", k= "AUTO")],
-                [sg.CB("Basic", k= "BASIC"), sg.CB("Full", k= "FULL")], [sg.B("Filter")],
-
-                [sg.B("Save Filter as: ", k= "SAVE"), sg.I(s= (20, 1), k="SAVEAS")], [sg.T("_"*40)],
-                [sg.B("Favourites"), sg.B("AutoSignUp")], [sg.T("Saved Filters: ")],
-                [sg.DD(list(self.p.Filters.keys()), k= "FILTERS", s= (30,1)), sg.B("Filter", k= "SAVEDFILTER")]
+                [sg.T("Time between: ")],
+                [sg.DD(self.p._times, k= "START"), sg.T("and"), sg.DD(self.p._times, k= "END")],
+                [sg.T("Day:  ")],
+                [sg.LB(["All"]+self.p.get_days(), k= "DAYS", s= (25, 10), select_mode= "extended")],
+                [sg.CB("Favourites", k= "FAV", default= True)], [sg.CB("AutoSignUp", k= "AUTO")],
+                [sg.B("Filter")]
             ]
             # Data Column
             self.data = [
@@ -171,8 +168,8 @@ class GUI:
         self.window["OPTIONS"].update(filter_result)
 
     def filters_todct(self, v):
-        return dict(names=v["NAME"], days=v["DAYS"], favs=v["FAV"], bl=v["BL"],
-                    auto=v["AUTO"], basic=v["BASIC"], full= v["FULL"])
+        return dict(days=v["DAYS"], favs=v["FAV"], auto=v["AUTO"],
+                    start=v["START"], end=v["END"])
 
     def update_filters(self):
         filters = list(self.p.Filters.keys())
@@ -194,10 +191,6 @@ class GUI:
                 # self.p.save_all()   ##########
                 # self.s.close()  ##########
                 break
-
-            elif e in ("Favourites", "AutoSignUp"):
-                results = self.p.apply_filter(e)
-                self.update_main_options(results)
 
             elif e == "Filter":
                 filter = self.p.create_filter(**self.filters_todct(v))
@@ -232,10 +225,6 @@ class GUI:
                     continue
                 self.p.Filters[n] = self.filters_todct(v)
                 self.update_filters()
-
-            elif e == "SAVEDFILTER":
-                results = self.p.apply_filter(v["FILTERS"])
-                self.update_main_options(results)
 
             elif e in ("addFAV", "addBL"):
                 lst = "Favourites" if e == "addFAV" else "Blacklist"
