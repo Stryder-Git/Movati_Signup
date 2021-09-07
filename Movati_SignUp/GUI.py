@@ -15,17 +15,17 @@ class GUI:
         self.THEME = self.settings["default_theme"]
         sg.theme(self.THEME)
 
-        self.s.connect()   ####
-        self.update_completed_failed_autosignups() ######
+        # self.s.connect()   ####
+        # self.update_completed_failed_autosignups() ######
         self.create_main_window()
 
     def get_settings(self):
         with open(self._gui_settings_loc, "r") as settings:
             return load(settings)
+
     def save_settings(self):
         with open(self._gui_settings_loc, "w") as settings:
             dump(self.settings, settings)
-
 
     def update_completed_failed_autosignups(self):
         completed, failed = self.s.get_completed_failed()
@@ -129,8 +129,6 @@ class GUI:
 
         theme_changer.close()
 
-
-
     def show_failed_window(self, failed):
         layout = [
             [sg.T("These Sign Ups have failed for some reason ... ")],
@@ -148,8 +146,6 @@ class GUI:
                 for link in self.p.Info.loc[self.p.hash_choices(sv["STATUS"]), "Link"]:
                     web.open(link)
 
-
-    #### STATUS WINDOW
     def show_status_window(self,lst):
         layout = [[sg.LB(lst, s= (60, 10), k= "STATUS", select_mode= "extended")],
                 [sg.B("Open"), sg.B("Add to AutoSignUp"), sg.T(" "*20), sg.B("Close Popup")]]
@@ -164,7 +160,6 @@ class GUI:
                     web.open(link)
             elif se == "Add to AutoSignUp":
                 self.p.add_to_autosignup(sv["STATUS"])
-
 
     def update_personalize_list(self):
         self.window["pBL"].update(self.p.Lists["Blacklist"])
@@ -183,8 +178,6 @@ class GUI:
         self.window["FILTERS"].update(values= filters)
         self.window["pFILTERS"].update(filters)
 
-
-
     def launch_main(self):
         while True:
             e, v = self.window.read()
@@ -192,13 +185,13 @@ class GUI:
             if e in (sg.WIN_CLOSED, "Quit"):
                 self.p.save_all()
                 self.save_settings()
-                signups = self.p.AutoSignUp[["dtSignTime", "Status", "Link"]].sort_values("dtSignTime") ##########
-                signups["dtSignTime"] = signups["dtSignTime"].astype("string")  ##########
-
-                self.s.send_update(signups.to_dict())   ##########
-                self.update_completed_failed_autosignups()  ##########
-                self.p.save_all()   ##########
-                self.s.close()  ##########
+                # signups = self.p.AutoSignUp[["dtSignTime", "Status", "Link"]].sort_values("dtSignTime") ##########
+                # signups["dtSignTime"] = signups["dtSignTime"].astype("string")  ##########
+                #
+                # self.s.send_update(signups.to_dict())   ##########
+                # self.update_completed_failed_autosignups()  ##########
+                # self.p.save_all()   ##########
+                # self.s.close()  ##########
                 break
 
             elif e in ("Favourites", "AutoSignUp"):

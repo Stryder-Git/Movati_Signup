@@ -142,12 +142,13 @@ class Getter:
 
     def set_basic_info(self):
         """going over the schedule of each day and saving the times and links"""
+
         for schedule in self.Site.find_all(class_= "scheduleDay"):
             day = schedule['id']
             for clss in schedule.find_all("div", recursive= False):
                 if "classRow" in clss["class"]:
                     time_ = clss.find(class_= "schedTime").text
-                    name = clss["class"][3]
+                    name = clss.find(class_= "schedTitle").a.text
                     link = clss.find(class_= "schedSignup")
 
                     # A unique id is created, if the same class is encountered,
