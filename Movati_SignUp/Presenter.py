@@ -16,11 +16,16 @@ class Presenter(Getter):
         if set_info: self.update_basic_info()
         self.lastfilter = Series()
 
-    def hash_choices(self, lst): return [self.hash(*choice.split(maxsplit= 3)[:3]) for choice in lst]
+    def _split(self, s):
+        s = s.split()
+        uday, utime = s[:2]
+        return uday, utime, " ".join(s[2:])
+
+    def hash_choices(self, lst):
+        return [self.hash(*self._split(choice)) for choice in lst]
 
     def add_to_autosignup(self, choices):
         choices = self.hash_choices(choices)
-        print(choices)
         # make sure that you have full info
         not_full = self.Info.loc[choices, "Status"].isna()
         if not_full.any():
@@ -53,7 +58,6 @@ class Presenter(Getter):
             td = (times[0] + pm) * 60 + times[1]
             to_return.append(to_timedelta(td, unit= "m"))
         return to_return
-
 
     def update_dt(self):
         """make dtStart and dtEnd columns for the classes"""
