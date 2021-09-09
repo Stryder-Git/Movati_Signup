@@ -66,6 +66,13 @@ class GUI:
 
             self.Main_Tab = sg.Tab("Main", [self.customfilters, *self.data])
 
+            ### AutoSignup Tab
+            self.Auto_Tab = sg.Tab("AutoSignUp", [
+                [sg.LB(self.p.make_status_text(self.p.AutoSignUp), s= (80, 15), k= "AUTO", select_mode= "extended")],
+                [sg.B("Remove from AutoSignup")]])
+
+            ### Register
+
             ### Personalize Tab
             col_height = 8
             self.Personalize_Tab = sg.Tab("Personalize", [[
@@ -89,7 +96,9 @@ class GUI:
                 ]
             ])
 
-            self.window = sg.Window("Movati", [[sg.TabGroup([[self.Main_Tab, self.Personalize_Tab]])]])
+            self.window = sg.Window("Movati", [[sg.TabGroup([
+                [self.Main_Tab, self.Auto_Tab, self.Personalize_Tab]
+            ])]])
             return self.window
 
     def save_default_time(self, start, end):
@@ -185,8 +194,7 @@ class GUI:
         self.window["OPTIONS"].update(filter_result)
 
     def filters_todct(self, v):
-        return dict(days=v["DAYS"], favs=v["FAV"], auto=v["AUTO"],
-                    start=v["START"], end=v["END"])
+        return dict(days=v["DAYS"], favs=v["FAV"], start=v["START"], end=v["END"])
 
     def update_filters(self):
         filters = list(self.p.Filters.keys())

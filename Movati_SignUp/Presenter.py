@@ -131,7 +131,9 @@ class Presenter(Getter):
         else: return ["nothing found..."]
 
     def make_status_text(self, df):
-        return self._make_text(df[self.STATUSCOLS])
+        if not df.empty:
+            return self._make_text(df[self.STATUSCOLS])
+        else: return ["nothing on AutoSignUp..."]
 
     def get_class_names(self): return self.Info['uName'].unique().tolist()
 
@@ -154,7 +156,7 @@ class Presenter(Getter):
         return to_timedelta(int(ampm.split(":")[0]), unit= "H") + add
 
 
-    def create_filter(self, days= None, favs= None, auto= None, start= None, end= None):
+    def create_filter(self, days= None, favs= None, start= None, end= None):
         """parses the requested filter options.
         If any options werent selected a mask with only true values is generated"""
         # remove All, if that makes the list empty, there is no restriction placed
@@ -178,10 +180,8 @@ class Presenter(Getter):
         bl = ~self.Info["uName"].isin(self.Lists["Blacklist"])
         if favs: favs = self.Info["uName"].isin(self.Lists["Favourites"])
         else: favs = self._alltrue()
-        if auto: auto = self.Info.index.isin(self.AutoSignUp.index)
-        else: auto = self._alltrue()
 
-        return days & when & bl & favs & auto
+        return days & when & bl & favs
 
     def apply_filter(self, filter):
         if filter.empty: filter = self._alltrue()
