@@ -78,10 +78,10 @@ class GUI:
                 [sg.LB(self.p.make_results_text(self.p.AutoSignUp), s= (80, 15), k= "AUTO", select_mode= "extended")],
                 [sg.B("Remove from AutoSignUp")]])
 
-            ### Registered Tab
-            self.Registered_Tab = sg.Tab("Registered", [
-                [sg.LB(self.p.make_results_text(self.p.Registered), s= (80, 15), k= "REGIST", select_mode= "extended")],
-                [sg.B("Cancel Reservation")]])
+            # ### Registered Tab
+            # self.Registered_Tab = sg.Tab("Registered", [
+            #     [sg.LB(self.p.make_results_text(self.p.Registered), s= (80, 15), k= "REGIST", select_mode= "extended")],
+            #     [sg.B("Cancel Reservation")]])
 
             ### Personalize Tab
             col_height = 8
@@ -107,7 +107,7 @@ class GUI:
             ])
 
             self.window = sg.Window("Movati", [[sg.TabGroup([
-                [self.Main_Tab, self.Auto_Tab, self.Registered_Tab, self.Personalize_Tab]
+                [self.Main_Tab, self.Auto_Tab, self.Personalize_Tab]
             ])]])
             return self.window
 
@@ -250,12 +250,12 @@ class GUI:
                 self.update_auto_tab()
 
 
-            ### Registered Tab
-            elif e == "Cancel Reservation":
-                choices = self.p.hash_choices(v["REGIST"])
-                self.p.cancel_reservations(choices)
-                self.p.remove_from_registered(choices)
-                self.update_registered_tab()
+            # ### Registered Tab
+            # elif e == "Cancel Reservation":
+            #     choices = self.p.hash_choices(v["REGIST"])
+            #     self.p.cancel_reservations(choices)
+            #     self.p.remove_from_registered(choices)
+            #     self.update_registered_tab()
 
 
             ### Personalize Tab
