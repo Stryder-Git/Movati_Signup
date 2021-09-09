@@ -15,6 +15,7 @@ class GUI:
         self.THEME = self.settings["default_theme"]
         self.DEF_START= self.settings["default_start"]
         self.DEF_END = self.settings["default_end"]
+        self.DEF_FAV = bool(self.settings["default_favourites"])
 
         sg.theme(self.THEME)
 
@@ -41,27 +42,29 @@ class GUI:
     def create_main_window(self):
         #### MAIN WINDOW
             ### Main Tab
-            # Filter Column
-            self.customfilters = [
-                [sg.T("Time between: ")],
+            # Filter Row
+            self.customfilters = [sg.Column(
+                [[sg.T("Time between: ")],
                 [sg.DD(self.p._times, k= "START", default_value= self.DEF_START), sg.T("and"),
-                 sg.DD(self.p._times, k= "END", default_value= self.DEF_END)],
+                 sg.DD(self.p._times, k= "END", default_value= self.DEF_END)]
+                ]),
+                sg.Column([
                 [sg.T("Day:  ")],
-                [sg.LB(["All"]+self.p.get_days(), k= "DAYS", s= (25, 10), select_mode= "extended")],
-                [sg.CB("Favourites", k= "FAV", default= True)], [sg.CB("AutoSignUp", k= "AUTO")],
-                [sg.B("Filter")]
+                [sg.LB(["All"]+self.p.get_days(), k= "DAYS", s= (25, 7), select_mode= "extended")],
+                ]),
+                sg.Column([
+                [sg.CB("Only Favourites", k= "FAV", default= self.DEF_FAV)], [sg.B("Filter")]
+                ])
             ]
 
             df = self.p.apply_filter(self.p.create_filter(
-                favs=True, start=self.DEF_START, end=self.DEF_END))
-            # Data Column
+                favs=self.DEF_FAV, start=self.DEF_START, end=self.DEF_END))
+            # Data Row
             self.data = [
-                [sg.LB(self.p.make_results_text(df), s=(60, 25), k="OPTIONS", select_mode="extended")],
-                [sg.B("Open"), sg.B("Get Status"), sg.B("Add to AutoSignUp"), sg.B("Remove from AutoSignUp")]
-            ]
-            self.Main_Tab = sg.Tab("Main", [[sg.Column(self.customfilters),
-                                             sg.VerticalSeparator(),
-                                             sg.Column(self.data)]])
+                [sg.LB(self.p.make_results_text(df), s=(80, 15), k="OPTIONS", select_mode="extended")],
+                [sg.B("Open"), sg.B("Get Status"), sg.B("Add to AutoSignUp")]]
+
+            self.Main_Tab = sg.Tab("Main", [self.customfilters, *self.data])
 
             ### Personalize Tab
             col_height = 8
