@@ -106,19 +106,20 @@ class Presenter(Getter):
             self.update_full_info(not_full[not_full].index)
 
         self.AutoSignUp = concat([self.AutoSignUp, self.Info.loc[choices]], ignore_index= False)
-        self.AutoSignUp = self.AutoSignUp.drop_duplicates()
-        self.AutoSignUp = self.AutoSignUp[~self.AutoSignUp.Status.isin([self.FULL])]
+        self.AutoSignUp = self.AutoSignUp.drop_duplicates(subset= ["uDay", "uTime", "uName"])
+
+        arefull = self.AutoSignUp.Status.isin([self.FULL])
+        are_full = self.AutoSignUp[arefull]
+        self.AutoSignUp = self.AutoSignUp[~arefull]
+
         self.AutoSignUp.loc[self.AutoSignUp.Status.isin([self.WAITLIST, self.AVAILABLE]), "dtSignTime"] = self.today
+        self.AutoSignUp = self.AutoSignUp.sort_values("dtStart")
+
+        return are_full
 
     def remove_from_autosignup(self, choices):
         choices = self.hash_choices(choices)
         self.AutoSignUp = self.AutoSignUp[~self.AutoSignUp.index.isin(choices)]
-
-
-    def update_autosignup(self, completed, failed):
-        completed = self.AutoSignUp.index.isin(completed)
-        failed = self.AutoSignUp.index.isin(failed)
-        self.AutoSignUp = self.AutoSignUp[~(completed | failed)]
 
     def _make_text(self, df):
         txt = df.to_string(index= False, col_space= 20, justify= "left").split("\n")
@@ -134,7 +135,7 @@ class Presenter(Getter):
 
     def make_status_text(self, df):
         if not df.empty:
-            return self._make_text(df[self.STATUSCOLS])
+            return self._make_text(df[self.RESCOLS])
         else: return ["nothing on AutoSignUp..."]
 
     def get_class_names(self): return self.Info['uName'].unique().tolist()

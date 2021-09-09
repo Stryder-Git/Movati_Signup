@@ -38,7 +38,8 @@ class GUI:
             failed_text = self.p.make_status_text(self.p.AutoSignUp[have_failed])
             self.show_failed_window(failed_text)
 
-        self.p.update_autosignup(completed, failed)
+        self.p.remove_from_autosignup(completed + failed)
+        self.update_auto_tab()
 
     def create_main_window(self):
         #### MAIN WINDOW
@@ -63,14 +64,14 @@ class GUI:
             # Data Row
             self.data = [
                 [sg.LB(self.p.make_results_text(df), s=(80, 15), k="OPTIONS", select_mode="extended")],
-                [sg.B("Open"), sg.B("Get Status"), sg.B("Add to AutoSignUp")]]
+                [sg.B("Open"), sg.B("Add to AutoSignUp")]]
 
             self.Main_Tab = sg.Tab("Main", [self.customfilters, *self.data])
 
             ### AutoSignup Tab
             self.Auto_Tab = sg.Tab("AutoSignUp", [
                 [sg.LB(self.p.make_status_text(self.p.AutoSignUp), s= (80, 15), k= "AUTO", select_mode= "extended")],
-                [sg.B("Remove from AutoSignup")]])
+                [sg.B("Remove from AutoSignUp")]])
 
             ### Register
 
@@ -171,20 +172,19 @@ class GUI:
                 for link in self.p.Info.loc[self.p.hash_choices(sv["STATUS"]), "Link"]:
                     web.open(link)
 
-    def show_status_window(self,lst):
-        layout = [[sg.LB(lst, s= (60, 10), k= "STATUS", select_mode= "extended")],
-                [sg.B("Open"), sg.B("Add to AutoSignUp"), sg.T(" "*20), sg.B("Close Popup")]]
-        status_window = sg.Window("Status Request", layout)
+    def show_warning_window(self, df):
+        layout = [[sg.T("These classes are already full: ")],
+            [sg.LB(self.p.make_results_text(df), s= (60, 10), k= "WARNINGS", select_mode= "extended")],
+            [sg.B("Open"), sg.T(" "*20), sg.B("Close Popup")]]
+        warning_window = sg.Window("Warning", layout)
         while True:
-            se, sv = status_window.read()
+            se, sv = warning_window.read()
             print(se, sv)
             if se in (sg.WIN_CLOSED, "Close Popup"):
-                status_window.close();break
+                warning_window.close();break
             elif se == "Open":
-                for link in self.p.Info.loc[self.p.hash_choices(sv["STATUS"]), "Link"]:
+                for link in self.p.Info.loc[self.p.hash_choices(sv["WARNINGS"]), "Link"]:
                     web.open(link)
-            elif se == "Add to AutoSignUp":
-                self.p.add_to_autosignup(sv["STATUS"])
 
     def update_personalize_list(self):
         self.window["pBL"].update(self.p.Lists["Blacklist"])
@@ -194,13 +194,12 @@ class GUI:
         filter_result = self.p.make_results_text(filter_result)
         self.window["OPTIONS"].update(filter_result)
 
+    def update_auto_tab(self):
+        autos = self.p.make_results_text(self.p.AutoSignUp)
+        self.window["AUTO"].update(autos)
+
     def filters_todct(self, v):
         return dict(days=v["DAYS"], favs=v["FAV"], start=v["START"], end=v["END"])
-
-    def update_filters(self):
-        filters = list(self.p.Filters.keys())
-        self.window["FILTERS"].update(values= filters)
-        self.window["pFILTERS"].update(filters)
 
 
     def launch_main(self):
@@ -224,34 +223,18 @@ class GUI:
                 results = self.p.apply_filter(filter)
                 self.update_main_options(results)
 
-            elif e == "Get Status":
-                full_info = self.p.update_full_info(self.p.hash_choices(v["OPTIONS"]))
-                updated_options = self.p.apply_filter(self.p.lastfilter)
-                self.update_main_options(updated_options)
-
-                # create and run the pop up showing the requested status
-                resp = self.p.make_status_text(full_info)
-                self.show_status_window(resp)
-
-
             elif e == "Open":
                 for link in self.p.Info.loc[self.p.hash_choices(v["OPTIONS"]), "Link"]: web.open(link)
 
             elif e == "Add to AutoSignUp":
-                self.p.add_to_autosignup(v["OPTIONS"])
+                failed = self.p.add_to_autosignup(v["OPTIONS"])
+                self.update_auto_tab()
+                if not failed.empty:
+                    self.show_warning_window(failed)
 
             elif e == "Remove from AutoSignUp":
-                self.p.remove_from_autosignup(v["OPTIONS"])
-
-            elif e == "SAVE":
-                n = v["SAVEAS"]
-                if n in list(self.p.Filters.keys())+ ["Favourites", "Blacklist", "AutoSignUp"]:
-                    sg.popup_ok("Please choose a different name.\n "
-                                "The chosen one is either taken or part of one of "
-                                "'Favourites, 'Blacklist', and 'AutoSignUp', which are reserved.")
-                    continue
-                self.p.Filters[n] = self.filters_todct(v)
-                self.update_filters()
+                self.p.remove_from_autosignup(v["AUTO"])
+                self.update_auto_tab()
 
             elif e in ("addFAV", "addBL"):
                 lst = "Favourites" if e == "addFAV" else "Blacklist"
@@ -268,10 +251,6 @@ class GUI:
                 lst, choices = ("Favourites", v["pFAV"]) if e == "removeFAV" else ("Blacklist", v["pBL"])
                 for choice in choices: self.p.Lists[lst].remove(choice)
                 self.update_personalize_list()
-
-            elif e == "removeFILTER":
-                for f in v["pFILTERS"]: del self.p.Filters[f]
-                self.update_filters()
 
             elif e == "pSAVETIME":
                 self.save_default_time(v["pSTART"], v["pEND"])
