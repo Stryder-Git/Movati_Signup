@@ -239,6 +239,18 @@ class Getter:
 
     def _alltrue(self): return Series(ones(self.Info.shape[0]), index= self.Info.index, dtype= "bool")
 
+    def cancel_reservations(self, ids):
+        cancelled = []
+        for id_ in ids: pass
+            # get the link
+            # login-get
+
+            # find the form
+
+            # create the form
+
+
+
 if __name__ == '__main__':
 
     g = Getter(get_site= False)
