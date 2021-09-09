@@ -47,6 +47,7 @@ class Getter:
     URL = "https://movatiathletic.com/club-schedules/?club=guelph"
     INFOLOC = ".\\Data\\Info.csv"
     AUTOLOC = ".\\Data\\AutoSignUp.csv"
+    REGISTLOC = ".\\Data\\Registered.csv"
     LISTSLOC = ".\\Data\\Lists.json"
     FILTERSLOC = ".\\Data\\Filters.json"
     LOGLOC = ".\\Data\\Logs"
@@ -66,8 +67,8 @@ class Getter:
         else: self.Site = None
         self.Info = self.getInfo()
         self.AutoSignUp = self.getAuto()
+        self.Registered = self.getRegist()
         self.Lists = self.getLists()
-        self.Filters = self.getFilters()
 
         self.mylogger = self.create_logger(self._get_class_name())
 
@@ -82,26 +83,26 @@ class Getter:
     def getInfo(self, index_col= "ID"):
         info = read_csv(self.INFOLOC, index_col= index_col, parse_dates= ["dtStart", "dtEnd", "dtSignTime"])
         return info[info.dtStart>= self.today]
-
-
-    def saveInfo(self): self.Info.to_csv(self.INFOLOC, index= True)
+    def saveInfo(self):
+        self.Info.to_csv(self.INFOLOC, index= True)
     def getAuto(self):
         return read_csv(self.AUTOLOC, index_col= "ID", parse_dates= ["dtStart","dtEnd","dtSignTime"])
+    def getRegist(self):
+        return read_csv(self.REGISTLOC, index_col= "ID", parse_dates= ["dtStart","dtEnd","dtSignTime"])
     def saveAuto(self):
         self.AutoSignUp.to_csv(self.AUTOLOC, index= True)
+    def saveRegist(self):
+        self.Registered.to_csv(self.REGISTLOC, index= True)
+
     def getLists(self):
         with open(self.LISTSLOC, "r") as lists: return load(lists)
     def saveLists(self):
         with open(self.LISTSLOC, "w") as lists: dump(self.Lists, lists)
-    def getFilters(self):
-        with open(self.FILTERSLOC, "r") as filters: return load(filters)
-    def saveFilters(self):
-        with open(self.FILTERSLOC, "w") as filters: dump(self.Filters, filters)
     def save_all(self):
         self.saveInfo()
         self.saveAuto()
+        self.saveRegist()
         self.saveLists()
-        self.saveFilters()
 
     def get(self, url= None): return BS(reqs.get(url or self.URL).text, features= "lxml")
 

@@ -12,6 +12,7 @@ class Presenter(Getter):
     STATUSCOLS = ["uDay", "uTime", "uName", "Status", "SignTime"]
 
 
+
     def __init__(self, set_info= True):
         Getter.__init__(self)
         if set_info: self.update_basic_info()
@@ -106,7 +107,7 @@ class Presenter(Getter):
             self.update_full_info(not_full[not_full].index)
 
         self.AutoSignUp = concat([self.AutoSignUp, self.Info.loc[choices]], ignore_index= False)
-        self.AutoSignUp = self.AutoSignUp.drop_duplicates(subset= ["uDay", "uTime", "uName"])
+        self.AutoSignUp = self.AutoSignUp.drop_duplicates(subset= self.RESCOLS)
 
         arefull = self.AutoSignUp.Status.isin([self.FULL])
         are_full = self.AutoSignUp[arefull]
@@ -121,6 +122,16 @@ class Presenter(Getter):
         choices = self.hash_choices(choices)
         self.AutoSignUp = self.AutoSignUp[~self.AutoSignUp.index.isin(choices)]
 
+    def add_to_registered(self, choices):
+        choices = self.hash_choices(choices)
+        self.Registered = concat([self.Registered, self.Info.loc[choices]], ignore_index= False)
+        self.Registered = self.Registered.drop_duplicates(subset= self.RESCOLS)
+
+    def remove_from_registered(self, choices):
+        choices = self.hash_choices(choices)
+        self.Registered = self.Registered[~self.Registered.index.isin(choices)]
+
+
     def _make_text(self, df):
         txt = df.to_string(index= False, col_space= 20, justify= "left").split("\n")
         txt[0] = txt[0].replace("u", " ", 3)
@@ -128,15 +139,10 @@ class Presenter(Getter):
 
     def make_results_text(self, df= None):
         if df is None: df = self.Info
-        results_df = df.reset_index(drop= True).sort_values("dtStart")
+        results_df = df.sort_values("dtStart")
         if not results_df.empty:
             return self._make_text(results_df[self.RESCOLS])
         else: return ["nothing found..."]
-
-    def make_status_text(self, df):
-        if not df.empty:
-            return self._make_text(df[self.RESCOLS])
-        else: return ["nothing on AutoSignUp..."]
 
     def get_class_names(self): return self.Info['uName'].unique().tolist()
 

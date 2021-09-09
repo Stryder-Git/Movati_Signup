@@ -19,9 +19,9 @@ class GUI:
 
         sg.theme(self.THEME)
 
+        self.create_main_window()
         # self.s.connect()   ####
         # self.update_completed_failed_autosignups() ######
-        self.create_main_window()
 
     def get_settings(self):
         with open(self._gui_settings_loc, "r") as settings:
@@ -35,8 +35,13 @@ class GUI:
         if failed:
             print("received failed")
             have_failed = self.p.AutoSignUp.index.isin(failed)
-            failed_text = self.p.make_status_text(self.p.AutoSignUp[have_failed])
+            failed_text = self.p.make_results_text(self.p.AutoSignUp[have_failed])
             self.show_failed_window(failed_text)
+
+        if completed:
+            self.p.add_to_registered(completed)
+            self.update_registered_tab()
+
 
         self.p.remove_from_autosignup(completed + failed)
         self.update_auto_tab()
@@ -70,10 +75,13 @@ class GUI:
 
             ### AutoSignup Tab
             self.Auto_Tab = sg.Tab("AutoSignUp", [
-                [sg.LB(self.p.make_status_text(self.p.AutoSignUp), s= (80, 15), k= "AUTO", select_mode= "extended")],
+                [sg.LB(self.p.make_results_text(self.p.AutoSignUp), s= (80, 15), k= "AUTO", select_mode= "extended")],
                 [sg.B("Remove from AutoSignUp")]])
 
-            ### Register
+            ### Registered Tab
+            self.Registered_Tab = sg.Tab("Registered", [
+                [sg.LB(self.p.make_results_text(self.p.Registered), s= (80, 15), k= "REGIST", select_mode= "extended")],
+                [sg.B("Cancel Reservation")]])
 
             ### Personalize Tab
             col_height = 8
@@ -99,7 +107,7 @@ class GUI:
             ])
 
             self.window = sg.Window("Movati", [[sg.TabGroup([
-                [self.Main_Tab, self.Auto_Tab, self.Personalize_Tab]
+                [self.Main_Tab, self.Auto_Tab, self.Registered_Tab, self.Personalize_Tab]
             ])]])
             return self.window
 
@@ -198,9 +206,12 @@ class GUI:
         autos = self.p.make_results_text(self.p.AutoSignUp)
         self.window["AUTO"].update(autos)
 
+    def update_registered_tab(self):
+        regist = self.p.maket_results_text(self.p.Registered)
+        self.window["REGIST"].update(regist)
+
     def filters_todct(self, v):
         return dict(days=v["DAYS"], favs=v["FAV"], start=v["START"], end=v["END"])
-
 
     def launch_main(self):
         while True:
@@ -218,6 +229,7 @@ class GUI:
                 # self.s.close()  ##########
                 break
 
+            ### Main Tab
             elif e == "Filter":
                 filter = self.p.create_filter(**self.filters_todct(v))
                 results = self.p.apply_filter(filter)
@@ -232,10 +244,21 @@ class GUI:
                 if not failed.empty:
                     self.show_warning_window(failed)
 
+            ### Auto Tab
             elif e == "Remove from AutoSignUp":
                 self.p.remove_from_autosignup(v["AUTO"])
                 self.update_auto_tab()
 
+
+            ### Registered Tab
+            elif e == "Cancel Reservation":
+                choices = self.p.hash_choices(v["REGIST"])
+                self.p.cancel_reservations(choices)
+                self.p.remove_from_registered(choices)
+                self.update_registered_tab()
+
+
+            ### Personalize Tab
             elif e in ("addFAV", "addBL"):
                 lst = "Favourites" if e == "addFAV" else "Blacklist"
                 other = "Blacklist" if e =="addFav" else "Favourites"
