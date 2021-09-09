@@ -1,1 +1,4 @@
 ID,uDay,uTime,uName,Day,Time,Name,Status,SignTime,dtStart,dtEnd,dtSignTime,Link
+september10friday12:10pm-12:50pmtabata(i/a),Friday10,12:10pm-12:50pm,Tabata (I/A) ,09/10/2021,12:10pm - 12:50pm,Tabata (I/A),Available,,2021-09-10 12:10:00,2021-09-10 12:50:00,2021-09-09 00:00:00,https://api.groupexpro.com/gxp/reservations/start/index/12413408/09/10/2021
+september10friday12:10pm-12:50pmcorechallenge(e),Friday10,12:10pm-12:50pm,Core Challenge (E) ,09/10/2021,12:10pm - 12:50pm,Core Challenge (E),Available,,2021-09-10 12:10:00,2021-09-10 12:50:00,2021-09-09 00:00:00,https://api.groupexpro.com/gxp/reservations/start/index/12414475/09/10/2021
+september10friday5:00pm-6:00pmpower&flow(i/a)hot,Friday10,5:00pm-6:00pm,Power & Flow (I/A) Hot ,09/10/2021,5:00pm - 6:00pm,Power & Flow (I/A) Hot,Waitlist,,2021-09-10 17:00:00,2021-09-10 18:00:00,2021-09-09 00:00:00,https://api.groupexpro.com/gxp/reservations/start/index/12409917/09/10/2021
