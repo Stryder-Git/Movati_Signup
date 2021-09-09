@@ -6,6 +6,8 @@ from numpy import ones
 from json import load, dump
 from logging import getLogger, Formatter, FileHandler, INFO
 
+from pprint import pprint
+
 class twdct:
     def __init__(self, **kwargs):
         self.a = {}; self.b = {}
@@ -240,11 +242,58 @@ class Getter:
 
     def _alltrue(self): return Series(ones(self.Info.shape[0]), index= self.Info.index, dtype= "bool")
 
-    def cancel_reservations(self, ids):
-        cancelled = []
-        for id_ in ids: pass
+
+    def _cancelForm(self, token):
+        form =  {i["name"]: i["value"] for i in token}
+        form.update({"action": "cancelReservation", "e": 0, "type": ""})
+        return form
+
+    def cancel_reservations(self, links):
+        cancelled= []
+        failed = []
+        for link in links:
             # get the link
+            # try:
+            #     link = self.Raw_Info[id_]["Link"]
+            # except KeyError as e:
+            #     print(f"{id_} not in the raw_info dictionary for some reason")
+            #     failed.append(id_)
+            #     continue
+            # if link is None:
+            #     print(f"{id_} 's link is None.")
+            #     failed.append(id_)
+            #     continue
+
             # login-get
+            site, session, url = self.login_get(link, keep= True)
+            print(site.text)
+            print()
+            print(site.find_all(attrs={"type": "hidden"}))
+
+            info = site.find_all(class_= "alert alert-info")[0]
+            site = session.get(f"https://api.groupexpro.com/{info.a['href']}")
+
+            # form = self._cancelForm(token)
+            # pprint(form)
+            response = session.post(url, data= form, )
+            # site = BS(response.text, "lxml")
+            # print(response.text)
+            print(site.text)
+
+            sucalrts= site.find_all(class_= "alert-alert-success")
+            if sucalrts:
+                print("found sucess")
+                for als in sucalrts: print(als.text)
+            else:
+                eralrts = site.find_all(class_="alert alert-error")
+
+                if eralrts:
+                    print("found errors")
+                    for als in eralrts: print(als.text)
+
+
+
+
 
             # find the form
 
@@ -255,9 +304,10 @@ class Getter:
 if __name__ == '__main__':
 
     g = Getter(get_site= False)
-    g.Site = g.get()
-    days = g.set_days()
-    print(days)
+
+    links = ["https://api.groupexpro.com/gxp/reservations/start/index/12414350/09/11/2021"]
+
+
 
     """
     Start with setting the available dates by parsing
