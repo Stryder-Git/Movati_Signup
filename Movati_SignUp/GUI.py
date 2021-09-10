@@ -19,9 +19,9 @@ class GUI:
 
         sg.theme(self.THEME)
 
-        self.create_main_window()
         # self.s.connect()   ####
         # self.update_completed_failed_autosignups() ######
+        self.create_main_window()
 
     def get_settings(self):
         with open(self._gui_settings_loc, "r") as settings:
@@ -38,13 +38,7 @@ class GUI:
             failed_text = self.p.make_results_text(self.p.AutoSignUp[have_failed])
             self.show_failed_window(failed_text)
 
-        if completed:
-            self.p.add_to_registered(completed)
-            self.update_registered_tab()
-
-
         self.p.remove_from_autosignup(completed + failed)
-        self.update_auto_tab()
 
     def create_main_window(self):
         #### MAIN WINDOW
