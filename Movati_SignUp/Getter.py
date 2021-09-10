@@ -6,6 +6,8 @@ from numpy import ones
 from json import load, dump
 from logging import getLogger, Formatter, FileHandler, INFO
 
+from pprint import pprint
+
 class twdct:
     def __init__(self, **kwargs):
         self.a = {}; self.b = {}
@@ -47,6 +49,7 @@ class Getter:
     URL = "https://movatiathletic.com/club-schedules/?club=guelph"
     INFOLOC = ".\\Data\\Info.csv"
     AUTOLOC = ".\\Data\\AutoSignUp.csv"
+    REGISTLOC = ".\\Data\\Registered.csv"
     LISTSLOC = ".\\Data\\Lists.json"
     FILTERSLOC = ".\\Data\\Filters.json"
     LOGLOC = ".\\Data\\Logs"
@@ -67,7 +70,6 @@ class Getter:
         self.Info = self.getInfo()
         self.AutoSignUp = self.getAuto()
         self.Lists = self.getLists()
-        self.Filters = self.getFilters()
 
         self.mylogger = self.create_logger(self._get_class_name())
 
@@ -82,26 +84,21 @@ class Getter:
     def getInfo(self, index_col= "ID"):
         info = read_csv(self.INFOLOC, index_col= index_col, parse_dates= ["dtStart", "dtEnd", "dtSignTime"])
         return info[info.dtStart>= self.today]
-
-
-    def saveInfo(self): self.Info.to_csv(self.INFOLOC, index= True)
+    def saveInfo(self):
+        self.Info.to_csv(self.INFOLOC, index= True)
     def getAuto(self):
         return read_csv(self.AUTOLOC, index_col= "ID", parse_dates= ["dtStart","dtEnd","dtSignTime"])
     def saveAuto(self):
         self.AutoSignUp.to_csv(self.AUTOLOC, index= True)
+
     def getLists(self):
         with open(self.LISTSLOC, "r") as lists: return load(lists)
     def saveLists(self):
         with open(self.LISTSLOC, "w") as lists: dump(self.Lists, lists)
-    def getFilters(self):
-        with open(self.FILTERSLOC, "r") as filters: return load(filters)
-    def saveFilters(self):
-        with open(self.FILTERSLOC, "w") as filters: dump(self.Filters, filters)
     def save_all(self):
         self.saveInfo()
         self.saveAuto()
         self.saveLists()
-        self.saveFilters()
 
     def get(self, url= None): return BS(reqs.get(url or self.URL).text, features= "lxml")
 
@@ -142,12 +139,13 @@ class Getter:
 
     def set_basic_info(self):
         """going over the schedule of each day and saving the times and links"""
+
         for schedule in self.Site.find_all(class_= "scheduleDay"):
             day = schedule['id']
             for clss in schedule.find_all("div", recursive= False):
                 if "classRow" in clss["class"]:
                     time_ = clss.find(class_= "schedTime").text
-                    name = clss["class"][3]
+                    name = clss.find(class_= "schedTitle").a.text
                     link = clss.find(class_= "schedSignup")
 
                     # A unique id is created, if the same class is encountered,
@@ -204,7 +202,7 @@ class Getter:
             if link is None:
                 print(f"{id_} 's link is None.")
                 continue
-                      
+
             site= self.login_get(link)
             self.Raw_Info[id_].update(dict(
                                    Name= " ".join(site.find("h2").text.split()[:-3]),
@@ -233,17 +231,20 @@ class Getter:
                     info["Status"] = self.WAITLIST; info["SignTime"] = None
 
             self.Raw_Info[id_] = info
-            to_return[id_] = info    
+            to_return[id_] = info
         return to_return
 
     def _alltrue(self): return Series(ones(self.Info.shape[0]), index= self.Info.index, dtype= "bool")
 
+
+
 if __name__ == '__main__':
 
     g = Getter(get_site= False)
-    g.Site = g.get()
-    days = g.set_days()
-    print(days)
+
+    links = ["https://api.groupexpro.com/gxp/reservations/start/index/12414350/09/11/2021"]
+
+
 
     """
     Start with setting the available dates by parsing

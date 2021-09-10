@@ -3,9 +3,9 @@ import webbrowser as web
 from json import load, dump
 
 
-
 class GUI:
     _gui_settings_loc = ".\\Data\\gui_settings.json"
+
 
     def __init__(self, p, s):
         self.p = p
@@ -13,10 +13,14 @@ class GUI:
 
         self.settings = self.get_settings()
         self.THEME = self.settings["default_theme"]
+        self.DEF_START= self.settings["default_start"]
+        self.DEF_END = self.settings["default_end"]
+        self.DEF_FAV = bool(self.settings["default_favourites"])
+
         sg.theme(self.THEME)
 
-        self.s.connect()   ####
-        self.update_completed_failed_autosignups() ######
+        # self.s.connect()   ####
+        # self.update_completed_failed_autosignups() ######
         self.create_main_window()
 
     def get_settings(self):
@@ -26,40 +30,47 @@ class GUI:
         with open(self._gui_settings_loc, "w") as settings:
             dump(self.settings, settings)
 
-
     def update_completed_failed_autosignups(self):
         completed, failed = self.s.get_completed_failed()
         if failed:
             print("received failed")
             have_failed = self.p.AutoSignUp.index.isin(failed)
-            failed_text = self.p.make_status_text(self.p.AutoSignUp[have_failed])
+            failed_text = self.p.make_results_text(self.p.AutoSignUp[have_failed])
             self.show_failed_window(failed_text)
 
-        self.p.update_autosignup(completed, failed)
+        self.p.remove_from_autosignup(completed + failed)
 
     def create_main_window(self):
         #### MAIN WINDOW
             ### Main Tab
-            # Filter Column
-            self.customfilters = [
-                [sg.T("Name: "), sg.T(" "*18), sg.T("Day:  ")],
-                [sg.LB(["All"]+self.p.get_class_names(), k= "NAME", s= (16, 10), select_mode= "extended"),
-                                sg.LB(["All"]+self.p.get_days(), k= "DAYS", s= (16, 10), select_mode= "extended")],
-                [sg.CB("Favourites", k= "FAV")], [sg.CB("Blacklist", k= "BL")], [sg.CB("AutoSignUp", k= "AUTO")],
-                [sg.CB("Basic", k= "BASIC"), sg.CB("Full", k= "FULL")], [sg.B("Filter")],
+            # Filter Row
+            self.customfilters = [sg.Column(
+                [[sg.T("Time between: ")],
+                [sg.DD(self.p._times, k= "START", default_value= self.DEF_START), sg.T("and"),
+                 sg.DD(self.p._times, k= "END", default_value= self.DEF_END)]
+                ]),
+                sg.Column([
+                [sg.T("Day:  ")],
+                [sg.LB(["All"]+self.p.get_days(), k= "DAYS", s= (25, 7), select_mode= "extended")],
+                ]),
+                sg.Column([
+                [sg.CB("Only Favourites", k= "FAV", default= self.DEF_FAV)], [sg.B("Filter")]
+                ])
+            ]
 
-                [sg.B("Save Filter as: ", k= "SAVE"), sg.I(s= (20, 1), k="SAVEAS")], [sg.T("_"*40)],
-                [sg.B("Favourites"), sg.B("AutoSignUp")], [sg.T("Saved Filters: ")],
-                [sg.DD(list(self.p.Filters.keys()), k= "FILTERS", s= (30,1)), sg.B("Filter", k= "SAVEDFILTER")]
-            ]
-            # Data Column
+            df = self.p.apply_filter(self.p.create_filter(
+                favs=self.DEF_FAV, start=self.DEF_START, end=self.DEF_END))
+            # Data Row
             self.data = [
-                [sg.LB(self.p.make_results_text(), s=(60, 25), k="OPTIONS", select_mode="extended")],
-                [sg.B("Open"), sg.B("Get Status"), sg.B("Add to AutoSignUp"), sg.B("Remove from AutoSignUp")]
-            ]
-            self.Main_Tab = sg.Tab("Main", [[sg.Column(self.customfilters),
-                                             sg.VerticalSeparator(),
-                                             sg.Column(self.data)]])
+                [sg.LB(self.p.make_results_text(df), s=(80, 15), k="OPTIONS", select_mode="extended")],
+                [sg.B("Open"), sg.B("Add to AutoSignUp")]]
+
+            self.Main_Tab = sg.Tab("Main", [self.customfilters, *self.data])
+
+            ### AutoSignup Tab
+            self.Auto_Tab = sg.Tab("AutoSignUp", [
+                [sg.LB(self.p.make_results_text(self.p.AutoSignUp), s= (80, 15), k= "AUTO", select_mode= "extended")],
+                [sg.B("Remove from AutoSignUp")]])
 
             ### Personalize Tab
             col_height = 8
@@ -74,16 +85,27 @@ class GUI:
                     [sg.LB(self.p.Lists["Blacklist"], s= (20, col_height), k= "pBL", select_mode= "extended")],
                     [sg.B("Remove", k= "removeBL")]])
                 ],
-                [sg.Column([[sg.T("Saved Filters:")], [sg.LB(list(self.p.Filters.keys()), s= (30, col_height), k= "pFILTERS")],
-                          [sg.B("Remove", k= "removeFILTER")]]),
+                [sg.Column([[sg.T("Default time between:")],
+                             [sg.DD(self.p._times, k="pSTART", default_value= self.DEF_START), sg.T("and"),
+                              sg.DD(self.p._times, k="pEND", default_value= self.DEF_END)],
+                            [sg.B("Save default", k= "pSAVETIME")]]),
                  sg.Column([[sg.T("Change the theme:\n")],
                            [sg.Button("Launch Theme Changer")],
                             [sg.T(f"Your current theme: \n{self.THEME}")]])
                 ]
             ])
 
-            self.window = sg.Window("Movati", [[sg.TabGroup([[self.Main_Tab, self.Personalize_Tab]])]])
+            self.window = sg.Window("Movati", [[sg.TabGroup([[self.Main_Tab,
+                                                              self.Auto_Tab,
+                                                              self.Personalize_Tab]])]])
             return self.window
+
+    def save_default_time(self, start, end):
+        self.DEF_START = self.settings["default_start"] = start
+        self.DEF_END = self.settings["default_end"] = end
+        self.save_settings()
+        self.window.close()
+        self.create_main_window()
 
     def change_theme(self, theme= None):
         if theme is None: return
@@ -130,8 +152,6 @@ class GUI:
 
         theme_changer.close()
 
-
-
     def show_failed_window(self, failed):
         layout = [
             [sg.T("These Sign Ups have failed for some reason ... ")],
@@ -149,23 +169,19 @@ class GUI:
                 for link in self.p.Info.loc[self.p.hash_choices(sv["STATUS"]), "Link"]:
                     web.open(link)
 
-
-    #### STATUS WINDOW
-    def show_status_window(self,lst):
-        layout = [[sg.LB(lst, s= (60, 10), k= "STATUS", select_mode= "extended")],
-                [sg.B("Open"), sg.B("Add to AutoSignUp"), sg.T(" "*20), sg.B("Close Popup")]]
-        status_window = sg.Window("Status Request", layout)
+    def show_warning_window(self, df):
+        layout = [[sg.T("These classes are already full: ")],
+            [sg.LB(self.p.make_results_text(df), s= (60, 10), k= "WARNINGS", select_mode= "extended")],
+            [sg.B("Open"), sg.T(" "*20), sg.B("Close Popup")]]
+        warning_window = sg.Window("Warning", layout)
         while True:
-            se, sv = status_window.read()
+            se, sv = warning_window.read()
             print(se, sv)
             if se in (sg.WIN_CLOSED, "Close Popup"):
-                status_window.close();break
+                warning_window.close();break
             elif se == "Open":
-                for link in self.p.Info.loc[self.p.hash_choices(sv["STATUS"]), "Link"]:
+                for link in self.p.Info.loc[self.p.hash_choices(sv["WARNINGS"]), "Link"]:
                     web.open(link)
-            elif se == "Add to AutoSignUp":
-                self.p.add_to_autosignup(sv["STATUS"])
-
 
     def update_personalize_list(self):
         self.window["pBL"].update(self.p.Lists["Blacklist"])
@@ -175,16 +191,16 @@ class GUI:
         filter_result = self.p.make_results_text(filter_result)
         self.window["OPTIONS"].update(filter_result)
 
+    def update_auto_tab(self):
+        autos = self.p.make_results_text(self.p.AutoSignUp)
+        self.window["AUTO"].update(autos)
+
+    def update_registered_tab(self):
+        regist = self.p.maket_results_text(self.p.Registered)
+        self.window["REGIST"].update(regist)
+
     def filters_todct(self, v):
-        return dict(names=v["NAME"], days=v["DAYS"], favs=v["FAV"], bl=v["BL"],
-                    auto=v["AUTO"], basic=v["BASIC"], full= v["FULL"])
-
-    def update_filters(self):
-        filters = list(self.p.Filters.keys())
-        self.window["FILTERS"].update(values= filters)
-        self.window["pFILTERS"].update(filters)
-
-
+        return dict(days=v["DAYS"], favs=v["FAV"], start=v["START"], end=v["END"])
 
     def launch_main(self):
         while True:
@@ -193,60 +209,46 @@ class GUI:
             if e in (sg.WIN_CLOSED, "Quit"):
                 self.p.save_all()
                 self.save_settings()
-                signups = self.p.AutoSignUp[["dtSignTime", "Status", "Link"]].sort_values("dtSignTime") ##########
-                signups["dtSignTime"] = signups["dtSignTime"].astype("string")  ##########
-
-                self.s.send_update(signups.to_dict())   ##########
-                self.update_completed_failed_autosignups()  ##########
-                self.p.save_all()   ##########
-                self.s.close()  ##########
+                # signups = self.p.AutoSignUp[["dtSignTime", "Status", "Link"]].sort_values("dtSignTime") ##########
+                # signups["dtSignTime"] = signups["dtSignTime"].astype("string")  ##########
+                #
+                # self.s.send_update(signups.to_dict())   ##########
+                # self.update_completed_failed_autosignups()  ##########
+                # self.p.save_all()   ##########
+                # self.s.close()  ##########
                 break
 
-            elif e in ("Favourites", "AutoSignUp"):
-                results = self.p.apply_filter(e)
-                self.update_main_options(results)
-
+            ### Main Tab
             elif e == "Filter":
                 filter = self.p.create_filter(**self.filters_todct(v))
                 results = self.p.apply_filter(filter)
                 self.update_main_options(results)
 
-            elif e == "Get Status":
-                full_info = self.p.update_full_info(self.p.hash_choices(v["OPTIONS"]))
-                updated_options = self.p.apply_filter(self.p.lastfilter)
-                self.update_main_options(updated_options)
-
-                # create and run the pop up showing the requested status
-                resp = self.p.make_status_text(full_info)
-                self.show_status_window(resp)
-
-
             elif e == "Open":
                 for link in self.p.Info.loc[self.p.hash_choices(v["OPTIONS"]), "Link"]: web.open(link)
 
             elif e == "Add to AutoSignUp":
-                self.p.add_to_autosignup(v["OPTIONS"])
+                failed = self.p.add_to_autosignup(v["OPTIONS"])
+                self.update_auto_tab()
+                if not failed.empty:
+                    self.show_warning_window(failed)
 
+            ### Auto Tab
             elif e == "Remove from AutoSignUp":
-                self.p.remove_from_autosignup(v["OPTIONS"])
+                self.p.remove_from_autosignup(v["AUTO"])
+                self.update_auto_tab()
 
-            elif e == "SAVE":
-                n = v["SAVEAS"]
-                if n in list(self.p.Filters.keys())+ ["Favourites", "Blacklist", "AutoSignUp"]:
-                    sg.popup_ok("Please choose a different name.\n "
-                                "The chosen one is either taken or part of one of "
-                                "'Favourites, 'Blacklist', and 'AutoSignUp', which are reserved.")
-                    continue
-                self.p.Filters[n] = self.filters_todct(v)
-                self.update_filters()
 
-            elif e == "SAVEDFILTER":
-                results = self.p.apply_filter(v["FILTERS"])
-                self.update_main_options(results)
-
+            ### Personalize Tab
             elif e in ("addFAV", "addBL"):
                 lst = "Favourites" if e == "addFAV" else "Blacklist"
-                for choice in v["pNAME"]: self.p.Lists[lst].append(choice)
+                other = "Blacklist" if e =="addFav" else "Favourites"
+
+                for choice in v["pNAME"]:
+                    self.p.Lists[lst].append(choice)
+                    try: self.p.Lists[other].remove(choice)
+                    except ValueError: pass
+
                 self.update_personalize_list()
 
             elif e in ("removeFAV", "removeBL"):
@@ -254,9 +256,8 @@ class GUI:
                 for choice in choices: self.p.Lists[lst].remove(choice)
                 self.update_personalize_list()
 
-            elif e == "removeFILTER":
-                for f in v["pFILTERS"]: del self.p.Filters[f]
-                self.update_filters()
+            elif e == "pSAVETIME":
+                self.save_default_time(v["pSTART"], v["pEND"])
 
             elif e == "Launch Theme Changer":
                 self.launch_theme_changer()
