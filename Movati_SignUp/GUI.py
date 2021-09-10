@@ -214,7 +214,6 @@ class GUI:
         self.window["pBL"].update(self.p.Lists["Blacklist"])
         self.window["pFAV"].update(self.p.Lists["Favourites"])
 
-
     def filters_todct(self, v):
         return dict(days=v["DAYS"], favs=v["FAV"], start=v["START"], end=v["END"])
 
@@ -260,13 +259,16 @@ class GUI:
 
             ### Personalize Tab
             elif e in ("addFAV", "addBL"):
+                print('handling adding')
                 lst = "Favourites" if e == "addFAV" else "Blacklist"
-                other = "Blacklist" if e =="addFav" else "Favourites"
-
+                other = "Blacklist" if e =="addFAV" else "Favourites"
+                print(lst, other)
                 for choice in v["pNAME"]:
-                    self.p.Lists[lst].append(choice)
                     try: self.p.Lists[other].remove(choice)
                     except ValueError: pass
+                    try: self.p.Lists[lst].remove(choice)
+                    except ValueError: pass
+                    self.p.Lists[lst].append(choice)
 
                 self.update_personalize_list()
 
