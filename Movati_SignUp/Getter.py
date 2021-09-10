@@ -69,7 +69,6 @@ class Getter:
         else: self.Site = None
         self.Info = self.getInfo()
         self.AutoSignUp = self.getAuto()
-        self.Registered = self.getRegist()
         self.Lists = self.getLists()
 
         self.mylogger = self.create_logger(self._get_class_name())
@@ -89,12 +88,8 @@ class Getter:
         self.Info.to_csv(self.INFOLOC, index= True)
     def getAuto(self):
         return read_csv(self.AUTOLOC, index_col= "ID", parse_dates= ["dtStart","dtEnd","dtSignTime"])
-    def getRegist(self):
-        return read_csv(self.REGISTLOC, index_col= "ID", parse_dates= ["dtStart","dtEnd","dtSignTime"])
     def saveAuto(self):
         self.AutoSignUp.to_csv(self.AUTOLOC, index= True)
-    def saveRegist(self):
-        self.Registered.to_csv(self.REGISTLOC, index= True)
 
     def getLists(self):
         with open(self.LISTSLOC, "r") as lists: return load(lists)
@@ -103,7 +98,6 @@ class Getter:
     def save_all(self):
         self.saveInfo()
         self.saveAuto()
-        self.saveRegist()
         self.saveLists()
 
     def get(self, url= None): return BS(reqs.get(url or self.URL).text, features= "lxml")
@@ -241,63 +235,6 @@ class Getter:
         return to_return
 
     def _alltrue(self): return Series(ones(self.Info.shape[0]), index= self.Info.index, dtype= "bool")
-
-
-    def _cancelForm(self, token):
-        form =  {i["name"]: i["value"] for i in token}
-        form.update({"action": "cancelReservation", "e": 0, "type": ""})
-        return form
-
-    def cancel_reservations(self, links):
-        cancelled= []
-        failed = []
-        for link in links:
-            # get the link
-            # try:
-            #     link = self.Raw_Info[id_]["Link"]
-            # except KeyError as e:
-            #     print(f"{id_} not in the raw_info dictionary for some reason")
-            #     failed.append(id_)
-            #     continue
-            # if link is None:
-            #     print(f"{id_} 's link is None.")
-            #     failed.append(id_)
-            #     continue
-
-            # login-get
-            site, session, url = self.login_get(link, keep= True)
-            print(site.text)
-            print()
-            print(site.find_all(attrs={"type": "hidden"}))
-
-            info = site.find_all(class_= "alert alert-info")[0]
-            site = session.get(f"https://api.groupexpro.com/{info.a['href']}")
-
-            # form = self._cancelForm(token)
-            # pprint(form)
-            response = session.post(url, data= form, )
-            # site = BS(response.text, "lxml")
-            # print(response.text)
-            print(site.text)
-
-            sucalrts= site.find_all(class_= "alert-alert-success")
-            if sucalrts:
-                print("found sucess")
-                for als in sucalrts: print(als.text)
-            else:
-                eralrts = site.find_all(class_="alert alert-error")
-
-                if eralrts:
-                    print("found errors")
-                    for als in eralrts: print(als.text)
-
-
-
-
-
-            # find the form
-
-            # create the form
 
 
 
