@@ -144,10 +144,10 @@ class Getter:
             day = schedule['id']
             for clss in schedule.find_all("div", recursive= False):
                 if "classRow" in clss["class"]:
-                    time_ = clss.find(class_= "schedTime").text
-                    name = clss.find(class_= "schedTitle").a.text
+                    time_ = clss.find(class_= "schedTime").text.strip()
+                    name = clss.find(class_= "schedTitle").a.text.strip()
                     link = clss.find(class_= "schedSignup")
-                    teacher = clss.find(class_= "halfcol").text.split("\n")[1]
+                    teacher = clss.find(class_= "halfcol").text.split("\n")[1].strip()
 
                     # A unique id is created, if the same class is encountered,
                     # (for instances when refreshing) the id will be the same
