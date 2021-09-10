@@ -45,7 +45,7 @@ class Getter:
     WAITLIST = "Waitlist"  # when you can wait for a place to open
     USERN = "tung.angela@hotmail.com"
     PASSW = "BooandBaby"
-    FULLINFO = "ID uDay uTime uName Day Time Name Status SignTime dtStart dtEnd dtSignTime Link".split()
+    FULLINFO = "ID uDay uTime uName uTeacher Day Time Name Status SignTime dtStart dtEnd dtSignTime Link".split()
     URL = "https://movatiathletic.com/club-schedules/?club=guelph"
     INFOLOC = ".\\Data\\Info.csv"
     AUTOLOC = ".\\Data\\AutoSignUp.csv"
@@ -147,6 +147,7 @@ class Getter:
                     time_ = clss.find(class_= "schedTime").text
                     name = clss.find(class_= "schedTitle").a.text
                     link = clss.find(class_= "schedSignup")
+                    teacher = clss.find(class_= "far fa-user").a.text
 
                     # A unique id is created, if the same class is encountered,
                     # (for instances when refreshing) the id will be the same
@@ -155,7 +156,7 @@ class Getter:
                     link = None if link.a is None else link.a["href"]
                     # save with classname, day and time as key to the link
                     self.Raw_Info[id_] = self.createInfoDict(
-                        ID= id_, uDay= day, uTime= time_.strip(), uName= name, Link= link)
+                        ID= id_, uDay= day, uTime= time_.strip(), uName= name, uTeacher= teacher, Link= link)
         return self.Raw_Info
 
     def _passForm(self, token):

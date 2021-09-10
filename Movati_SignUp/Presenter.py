@@ -6,9 +6,7 @@ class Presenter(Getter):
      presentable data is done"""
     # RESCOLS = ["uDay", "uTime", "dtStart", "dtEnd", "uName", "SignTime", "Status"]
     # RESCOLS = Getter.FULLINFO[1:-1]
-    RESCOLS = ["uDay", "uTime", "uName"]
-    STATUSCOLS = ["uDay", "uTime", "uName", "Status", "SignTime"]
-
+    RESCOLS = ["uDay", "uTime", "uName", "uTeacher"]
 
 
     def __init__(self, set_info= True):
@@ -121,16 +119,16 @@ class Presenter(Getter):
         self.AutoSignUp = self.AutoSignUp[~self.AutoSignUp.index.isin(choices)]
 
     def _make_text(self, df):
-        txt = df.to_string(index= False, col_space= 20, justify= "left").split("\n")
-        txt[0] = txt[0].replace("u", " ", 3)
+        txt = df.to_string(index= False, formatters= [lambda x: f"{x:<20}"]*len(df.columns)).split("\n")
+        txt[0] = txt[0].replace("u", " ", 4)
         return txt
 
-    def make_results_text(self, df= None):
+    def make_results_text(self, df= None, alternative= "nothing found ..."):
         if df is None: df = self.Info
         results_df = df.sort_values("dtStart")
         if not results_df.empty:
             return self._make_text(results_df[self.RESCOLS])
-        else: return ["nothing found..."]
+        else: return [alternative]
 
     def get_class_names(self): return self.Info['uName'].unique().tolist()
 
