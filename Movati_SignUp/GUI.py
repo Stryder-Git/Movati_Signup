@@ -30,15 +30,39 @@ class GUI:
         with open(self._gui_settings_loc, "w") as settings:
             dump(self.settings, settings)
 
+
+    def save_default_time(self, start, end):
+        self.DEF_START = self.settings["default_start"] = start
+        self.DEF_END = self.settings["default_end"] = end
+        self.save_settings()
+        self.window.close()
+        self.create_main_window()
+
+    def change_theme(self, theme= None):
+        if theme is None: return
+        self.window.close()
+        self.THEME = theme
+        self.settings["default_theme"] = self.THEME
+        sg.theme(self.THEME)
+        self.create_main_window()
+
     def update_completed_failed_autosignups(self):
         completed, failed = self.s.get_completed_failed()
         if failed:
             print("received failed")
-            have_failed = self.p.AutoSignUp.index.isin(failed)
-            failed_text = self.p.make_results_text(self.p.AutoSignUp[have_failed])
-            self.show_failed_window(failed_text)
+            have_failed = self.p.AutoSignUp[self.p.AutoSignUp.index.isin(failed)]
+            self.show_failed_window(have_failed)
 
         self.p.remove_from_autosignup(completed + failed)
+
+    def resolve(self, choices, options, df):
+        """this should get a list with the choices, a list with the options that were chosen from
+            and the dataframe that the options list was created from
+        """
+        # first get the index of the choices in the options list [these are the integer locations in df.index]
+        ix = [options.index(choice)-1 for choice in choices] # -1 because the first row in options are the columns
+        # then return the indexes at the integer locations
+        return df.index[ix]
 
     def create_main_window(self):
         #### MAIN WINDOW
@@ -60,16 +84,20 @@ class GUI:
 
             df = self.p.apply_filter(self.p.create_filter(
                 favs=self.DEF_FAV, start=self.DEF_START, end=self.DEF_END))
+            self._main_options, self._main_df = self.p.make_results_text(df)
+
             # Data Row
             self.data = [
-                [sg.LB(self.p.make_results_text(df), s=(80, 15), k="OPTIONS", select_mode="extended")],
+                [sg.LB(self._main_options, s=(80, 15), k="OPTIONS", select_mode="extended")],
                 [sg.B("Open"), sg.B("Add to AutoSignUp")]]
 
             self.Main_Tab = sg.Tab("Main", [self.customfilters, *self.data])
 
+
+            self._auto_options, self._auto_df = self.p.make_results_text(self.p.AutoSignUp)
             ### AutoSignup Tab
             self.Auto_Tab = sg.Tab("AutoSignUp", [
-                [sg.LB(self.p.make_results_text(self.p.AutoSignUp), s= (80, 15), k= "AUTO", select_mode= "extended")],
+                [sg.LB(self._auto_options, s= (80, 15), k= "AUTO", select_mode= "extended")],
                 [sg.B("Remove from AutoSignUp")]])
 
             ### Personalize Tab
@@ -100,20 +128,6 @@ class GUI:
                                                               self.Personalize_Tab]])]])
             return self.window
 
-    def save_default_time(self, start, end):
-        self.DEF_START = self.settings["default_start"] = start
-        self.DEF_END = self.settings["default_end"] = end
-        self.save_settings()
-        self.window.close()
-        self.create_main_window()
-
-    def change_theme(self, theme= None):
-        if theme is None: return
-        self.window.close()
-        self.THEME = theme
-        self.settings["default_theme"] = self.THEME
-        sg.theme(self.THEME)
-        self.create_main_window()
 
     def launch_theme_changer(self):
         def create_tabs(current_theme):
@@ -153,9 +167,11 @@ class GUI:
         theme_changer.close()
 
     def show_failed_window(self, failed):
+        options, failed = self.p.make_results_text(failed)
+
         layout = [
             [sg.T("These Sign Ups have failed for some reason ... ")],
-            [sg.LB(failed, s= (60, 10), k= "STATUS", select_mode= "extended")],
+            [sg.LB(options, s= (60, 10), k= "STATUS", select_mode= "extended")],
             [sg.B("Open"), sg.T(" "*20), sg.B("Close Popup")]
         ]
 
@@ -166,13 +182,16 @@ class GUI:
             if se in (sg.WIN_CLOSED, "Close Popup"):
                 failed_window.close();break
             elif se == "Open":
-                for link in self.p.Info.loc[self.p.hash_choices(sv["STATUS"]), "Link"]:
+                for link in self.p.Info.loc[self.resolve(sv["STATUS"], options, failed), "Link"]:
                     web.open(link)
 
     def show_warning_window(self, df):
+        options, df = self.p.make_results_text(df)
+
         layout = [[sg.T("These classes are already full: ")],
-            [sg.LB(self.p.make_results_text(df), s= (60, 10), k= "WARNINGS", select_mode= "extended")],
+            [sg.LB(options, s= (60, 10), k= "WARNINGS", select_mode= "extended")],
             [sg.B("Open"), sg.T(" "*20), sg.B("Close Popup")]]
+
         warning_window = sg.Window("Warning", layout)
         while True:
             se, sv = warning_window.read()
@@ -180,24 +199,21 @@ class GUI:
             if se in (sg.WIN_CLOSED, "Close Popup"):
                 warning_window.close();break
             elif se == "Open":
-                for link in self.p.Info.loc[self.p.hash_choices(sv["WARNINGS"]), "Link"]:
+                for link in self.p.Info.loc[self.resolve(sv["WARNINGS"], options, df), "Link"]:
                     web.open(link)
+
+    def update_main_options(self, filter_result):
+        self._main_options, self._main_df = self.p.make_results_text(filter_result)
+        self.window["OPTIONS"].update(self._main_options)
+
+    def update_auto_tab(self):
+        self._auto_options, self._auto_df = self.p.make_results_text(self.p.AutoSignUp)
+        self.window["AUTO"].update(self._auto_options)
 
     def update_personalize_list(self):
         self.window["pBL"].update(self.p.Lists["Blacklist"])
         self.window["pFAV"].update(self.p.Lists["Favourites"])
 
-    def update_main_options(self, filter_result):
-        filter_result = self.p.make_results_text(filter_result)
-        self.window["OPTIONS"].update(filter_result)
-
-    def update_auto_tab(self):
-        autos = self.p.make_results_text(self.p.AutoSignUp)
-        self.window["AUTO"].update(autos)
-
-    def update_registered_tab(self):
-        regist = self.p.maket_results_text(self.p.Registered)
-        self.window["REGIST"].update(regist)
 
     def filters_todct(self, v):
         return dict(days=v["DAYS"], favs=v["FAV"], start=v["START"], end=v["END"])
@@ -225,17 +241,20 @@ class GUI:
                 self.update_main_options(results)
 
             elif e == "Open":
-                for link in self.p.Info.loc[self.p.hash_choices(v["OPTIONS"]), "Link"]: web.open(link)
+                choices = self.resolve(v["OPTIONS"], self._main_options, self._main_df)
+                for link in self.p.Info.loc[choices, "Link"]: web.open(link)
 
             elif e == "Add to AutoSignUp":
-                failed = self.p.add_to_autosignup(v["OPTIONS"])
+                choices = self.resolve(v["OPTIONS"], self._main_options, self._main_df)
+                failed = self.p.add_to_autosignup(choices)
                 self.update_auto_tab()
                 if not failed.empty:
                     self.show_warning_window(failed)
 
             ### Auto Tab
             elif e == "Remove from AutoSignUp":
-                self.p.remove_from_autosignup(v["AUTO"])
+                choices = self.resolve(v["AUTO"], self._main_options, self._main_df)
+                self.p.remove_from_autosignup(choices)
                 self.update_auto_tab()
 
 

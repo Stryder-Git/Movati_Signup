@@ -89,16 +89,7 @@ class Presenter(Getter):
         self.update_dt()
         return full_info
 
-    def _split(self, s):
-        s = s.split()
-        uday, utime = s[:2]
-        return uday, utime, " ".join(s[2:])
-
-    def hash_choices(self, lst):
-        return [self.hash(*self._split(choice)) for choice in lst]
-
     def add_to_autosignup(self, choices):
-        choices = self.hash_choices(choices)
         # make sure that you have full info
         not_full = self.Info.loc[choices, "Status"].isna()
         if not_full.any():
@@ -117,20 +108,19 @@ class Presenter(Getter):
         return are_full
 
     def remove_from_autosignup(self, choices):
-        choices = self.hash_choices(choices)
         self.AutoSignUp = self.AutoSignUp[~self.AutoSignUp.index.isin(choices)]
 
-    def _make_text(self, df):
-        txt = df.to_string(index= False, formatters= [lambda x: f"{x:<20}"]*len(df.columns)).split("\n")
-        txt[0] = txt[0].replace("u", " ", 4)
-        return txt
 
-    def make_results_text(self, df= None, alternative= "nothing found ..."):
-        if df is None: df = self.Info
+    def make_results_text(self, df, alternative= "nothing found ..."):
         results_df = df.sort_values("dtStart")
         if not results_df.empty:
-            return self._make_text(results_df[self.RESCOLS])
-        else: return [alternative]
+            txt = df[self.RESCOLS].to_string(index=False,
+                                             col_space= 20,
+                                             justify= "left"
+                                             ).split("\n")
+            txt[0] = txt[0].replace("u", " ", 4)
+            return txt, results_df
+        else: return [alternative], results_df
 
     def get_class_names(self): return self.Info['uName'].unique().tolist()
 
