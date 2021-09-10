@@ -51,7 +51,7 @@ class GUI:
         if failed:
             print("received failed")
             have_failed = self.p.AutoSignUp[self.p.AutoSignUp.index.isin(failed)]
-            self.show_failed_window(have_failed)
+            self.show_warning_window(have_failed)
 
         self.p.remove_from_autosignup(completed + failed)
 
@@ -129,77 +129,24 @@ class GUI:
             return self.window
 
 
-    def launch_theme_changer(self):
-        def create_tabs(current_theme):
-            choose_tab = sg.Tab("Choose", [
-                [sg.T("Choose a theme:")],
-                [sg.LB(sg.theme_list(), s= (20, 12), default_values= [current_theme],
-                       k= "THEME", select_mode= "single")],
-                [sg.T(f"Current theme:\n\n{current_theme}")],
-                [sg.B("Try it"), sg.B("Choose it")], [sg.B("Close Popup")]
-            ])
-            nothing_tab = sg.Tab("Nothing", [
-                [sg.T("Just to see the color of tabs...")]
-            ])
-            return [[choose_tab, nothing_tab]]
 
-        theme_changer = sg.Window("Theme Chooser", [[sg.TabGroup(create_tabs(self.THEME))]])
-        theme = self.THEME
-        while True:
-            se, sv = theme_changer.read()
-            print(se, sv)
-            if se in (sg.WIN_CLOSED, "Close Popup"):
-                sg.theme(self.THEME)
-                break
-
-            elif se == "Try it":
-                theme = sv['THEME'][0]
-                print(f"\nTYRYING IT:  {theme}")
-                theme_changer.close()
-                sg.theme(theme)
-                theme_changer = sg.Window("Theme Chooser", [[sg.TabGroup(create_tabs(theme))]])
-
-            elif se == "Choose it":
-                print(f"\nCHOOSING IT:  {theme}")
-                self.change_theme(theme)
-                break
-
-        theme_changer.close()
-
-    def show_failed_window(self, failed):
-        options, failed = self.p.make_results_text(failed)
+    def show_warning_window(self, df, msg=""):
+        options, df = self.p.make_results_text(df)
 
         layout = [
-            [sg.T("These Sign Ups have failed for some reason ... ")],
-            [sg.LB(options, s= (60, 10), k= "STATUS", select_mode= "extended")],
+            [sg.T(msg)],
+            [sg.LB(options, s= (60, 10), k= "OPTIONS", select_mode= "extended")],
             [sg.B("Open"), sg.T(" "*20), sg.B("Close Popup")]
         ]
 
-        failed_window = sg.Window("Failed Sign Ups", layout)
+        failed_window = sg.Window("Warning", layout)
         while True:
             se, sv = failed_window.read()
             print(se, sv)
             if se in (sg.WIN_CLOSED, "Close Popup"):
                 failed_window.close();break
             elif se == "Open":
-                for link in self.p.Info.loc[self.resolve(sv["STATUS"], options, failed), "Link"]:
-                    web.open(link)
-
-    def show_warning_window(self, df):
-        options, df = self.p.make_results_text(df)
-
-        layout = [[sg.T("These classes are already full: ")],
-            [sg.LB(options, s= (60, 10), k= "WARNINGS", select_mode= "extended")],
-            [sg.B("Open"), sg.T(" "*20), sg.B("Close Popup")]]
-
-        warning_window = sg.Window("Warning", layout)
-        while True:
-            se, sv = warning_window.read()
-            print(se, sv)
-            if se in (sg.WIN_CLOSED, "Close Popup"):
-                warning_window.close();break
-            elif se == "Open":
-                for link in self.p.Info.loc[self.resolve(sv["WARNINGS"], options, df), "Link"]:
+                for link in self.p.Info.loc[self.resolve(sv["OPTIONS"], options, df), "Link"]:
                     web.open(link)
 
     def update_main_options(self, filter_result):
@@ -248,11 +195,12 @@ class GUI:
                 failed = self.p.add_to_autosignup(choices)
                 self.update_auto_tab()
                 if not failed.empty:
-                    self.show_warning_window(failed)
+                    self.show_warning_window(failed, "These classes seem to be unavailable")
+
 
             ### Auto Tab
             elif e == "Remove from AutoSignUp":
-                choices = self.resolve(v["AUTO"], self._main_options, self._main_df)
+                choices = self.resolve(v["AUTO"], self._auto_options, self._auto_df)
                 self.p.remove_from_autosignup(choices)
                 self.update_auto_tab()
 
@@ -284,3 +232,40 @@ class GUI:
                 self.launch_theme_changer()
 
         self.window.close()
+
+    def launch_theme_changer(self):
+        def create_tabs(current_theme):
+            choose_tab = sg.Tab("Choose", [
+                [sg.T("Choose a theme:")],
+                [sg.LB(sg.theme_list(), s= (20, 12), default_values= [current_theme],
+                       k= "THEME", select_mode= "single")],
+                [sg.T(f"Current theme:\n\n{current_theme}")],
+                [sg.B("Try it"), sg.B("Choose it")], [sg.B("Close Popup")]
+            ])
+            nothing_tab = sg.Tab("Nothing", [
+                [sg.T("Just to see the color of tabs...")]
+            ])
+            return [[choose_tab, nothing_tab]]
+
+        theme_changer = sg.Window("Theme Chooser", [[sg.TabGroup(create_tabs(self.THEME))]])
+        theme = self.THEME
+        while True:
+            se, sv = theme_changer.read()
+            print(se, sv)
+            if se in (sg.WIN_CLOSED, "Close Popup"):
+                sg.theme(self.THEME)
+                break
+
+            elif se == "Try it":
+                theme = sv['THEME'][0]
+                print(f"\nTYRYING IT:  {theme}")
+                theme_changer.close()
+                sg.theme(theme)
+                theme_changer = sg.Window("Theme Chooser", [[sg.TabGroup(create_tabs(theme))]])
+
+            elif se == "Choose it":
+                print(f"\nCHOOSING IT:  {theme}")
+                self.change_theme(theme)
+                break
+
+        theme_changer.close()
