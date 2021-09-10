@@ -122,16 +122,6 @@ class Presenter(Getter):
         choices = self.hash_choices(choices)
         self.AutoSignUp = self.AutoSignUp[~self.AutoSignUp.index.isin(choices)]
 
-    def add_to_registered(self, choices):
-        choices = self.hash_choices(choices)
-        self.Registered = concat([self.Registered, self.Info.loc[choices]], ignore_index= False)
-        self.Registered = self.Registered.drop_duplicates(subset= self.RESCOLS)
-
-    def remove_from_registered(self, choices):
-        choices = self.hash_choices(choices)
-        self.Registered = self.Registered[~self.Registered.index.isin(choices)]
-
-
     def _make_text(self, df):
         txt = df.to_string(index= False, col_space= 20, justify= "left").split("\n")
         txt[0] = txt[0].replace("u", " ", 3)
