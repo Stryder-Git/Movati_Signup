@@ -147,7 +147,7 @@ class Getter:
                     time_ = clss.find(class_= "schedTime").text
                     name = clss.find(class_= "schedTitle").a.text
                     link = clss.find(class_= "schedSignup")
-                    teacher = clss.find(class_= "far fa-user").a.text
+                    teacher = clss.find(class_= "halfcol").text.split("\n")[1]
 
                     # A unique id is created, if the same class is encountered,
                     # (for instances when refreshing) the id will be the same
