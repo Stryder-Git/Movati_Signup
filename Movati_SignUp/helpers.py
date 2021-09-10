@@ -20,7 +20,11 @@ class Dobby:
             exit()
         self.make_initial_exchange()
 
-    def read(self, length = SIZE): return self.socket.recv(length).decode(self.F)
+    def read(self, length = SIZE, keep_bytes= False):
+        if keep_bytes:
+            return self.socket.recv(length)
+        else:
+            return self.socket.recv(length).decode(self.F)
 
 
     def make_initial_exchange(self):
@@ -42,7 +46,7 @@ class Dobby:
         for i in range(1, num_updates + 1):
             print(f"installing update number {i} of {num_updates}")
             length, filename = self.read().split("::")
-            contents = self.read(int(length))
+            contents = self.read(int(length), keep_bytes= True)
             install_update(filename.strip(), contents)
 
         if num_updates:
@@ -100,8 +104,8 @@ class Update_Installer:
         self.project_folder = "."
 
     def __call__(self, filename, contents):
-        if not (isinstance(filename, str) and isinstance(contents, str)):
-            raise ValueError(f"filename and contents must be string")
+        if not (isinstance(filename, str) and isinstance(contents, bytes)):
+            raise ValueError(f"filename must be string and contents must be bytes")
         if "." in filename or ".py" in filename:
             raise ValueError(f"something about the extension in filename: {filename} is wrong,"
                              f"don't use extensions")
@@ -112,7 +116,7 @@ class Update_Installer:
             os.remove(filepath)
 
         print("creating ", filepath)
-        with open(filepath, "w") as file:
+        with open(filepath, "wb") as file:
             file.write(contents)
 
         print("update installed")
