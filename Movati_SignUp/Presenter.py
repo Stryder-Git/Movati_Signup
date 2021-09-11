@@ -110,14 +110,13 @@ class Presenter(Getter):
     def remove_from_autosignup(self, choices):
         self.AutoSignUp = self.AutoSignUp[~self.AutoSignUp.index.isin(choices)]
 
+    def _prepare_df_for_text_hook(self, df):
+        return df.sort_values("dtStart")
 
     def make_results_text(self, df, alternative= "nothing found ..."):
-        results_df = df.sort_values("dtStart")
+        results_df = self._prepare_df_for_text_hook(df)
         if not results_df.empty:
-            txt = df[self.RESCOLS].to_string(index=False,
-                                             col_space= 20,
-                                             justify= "left"
-                                             ).split("\n")
+            txt = df[self.RESCOLS].to_string(index=False).split("\n")
             txt[0] = txt[0].replace("u", " ", 4)
             return txt, results_df
         else: return [alternative], results_df
