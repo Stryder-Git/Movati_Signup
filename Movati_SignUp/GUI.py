@@ -167,6 +167,7 @@ class GUI:
         return dict(days=v["DAYS"], favs=v["FAV"], start=v["START"], end=v["END"])
 
     def launch_main(self):
+        print(self._auto_df)
         while True:
             e, v = self.window.read()
             print(e, v)
@@ -204,7 +205,7 @@ class GUI:
                     self.show_warning_window(failed, "These classes seem to be unavailable")
 
 
-            ### Auto Tab
+            ### Remove from AutoSignUp -- Main_Tab & Auto_Tab
             elif e in ("OPTIONSREMOVE", "AUTOREMOVE"):
                 _e = e.replace("REMOVE", "")
                 choices = self.resolve(v[_e], self._auto_df if _e == "AUTO" else self._main_df)
@@ -236,7 +237,8 @@ class GUI:
             elif e in ("pSTART", "pEND"):
                 self.save_default_time(v["pSTART"], v["pEND"])
 
-            elif e == "DEF_FAV": self.save_default_favourites(v["DEF_FAV"])
+            elif e == "DEF_FAV":
+                self.save_default_favourites(v["DEF_FAV"])
 
             elif e == "Launch Theme Changer":
                 self.launch_theme_changer()
