@@ -30,19 +30,24 @@ class GUI:
         with open(self._gui_settings_loc, "w") as settings:
             dump(self.settings, settings)
 
+    def save_default_favourites(self, new_def):
+        print("saving favourites: ", new_def)
+        self.DEF_FAV = self.settings["default_favourites"] = new_def
+        self.save_settings()
 
     def save_default_time(self, start, end):
+        print("saving time: ", start, end)
         self.DEF_START = self.settings["default_start"] = start
         self.DEF_END = self.settings["default_end"] = end
         self.save_settings()
-        self.window.close()
-        self.create_main_window()
 
     def change_theme(self, theme= None):
+        print("saving theme: ", theme)
         if theme is None: return
         self.window.close()
         self.THEME = theme
         self.settings["default_theme"] = self.THEME
+        self.save_settings()
         sg.theme(self.THEME)
         self.create_main_window()
 
@@ -114,15 +119,17 @@ class GUI:
                     [sg.B("Remove", k= "removeBL")]])
                 ],
                 [sg.Column([[sg.T("Default time between:")],
-                             [sg.DD(self.p._times, k="pSTART", default_value= self.DEF_START), sg.T("and"),
-                              sg.DD(self.p._times, k="pEND", default_value= self.DEF_END)],
-                            [sg.B("Save default", k= "pSAVETIME")]]),
+                             [sg.DD(self.p._times, k="pSTART", default_value= self.DEF_START,
+                                    enable_events= True), sg.T("and"),
+                              sg.DD(self.p._times, k="pEND", default_value= self.DEF_END,
+                                    enable_events= True)]]),
                  sg.Column([[sg.T("Change the theme:\n")],
                            [sg.Button("Launch Theme Changer")],
-                            [sg.T(f"Your current theme: \n{self.THEME}")]])
+                            [sg.T(f"Your current theme: \n{self.THEME}")]]),
+                 sg.Column([[sg.T("Default favourites at start?")],
+                            [sg.CB("Yes.", k= "DEF_FAV", default= self.DEF_FAV, enable_events= True)]])
                 ]
             ])
-
             self.window = sg.Window("Movati", [[sg.TabGroup([[self.Main_Tab,
                                                               self.Auto_Tab,
                                                               self.Personalize_Tab]])]])
@@ -207,10 +214,8 @@ class GUI:
 
             ### Personalize Tab
             elif e in ("addFAV", "addBL"):
-                print('handling adding')
                 lst = "Favourites" if e == "addFAV" else "Blacklist"
                 other = "Blacklist" if e =="addFAV" else "Favourites"
-                print(lst, other)
                 for choice in v["pNAME"]:
                     try: self.p.Lists[other].remove(choice)
                     except ValueError: pass
@@ -225,8 +230,10 @@ class GUI:
                 for choice in choices: self.p.Lists[lst].remove(choice)
                 self.update_personalize_list()
 
-            elif e == "pSAVETIME":
+            elif e in ("pSTART", "pEND"):
                 self.save_default_time(v["pSTART"], v["pEND"])
+
+            elif e == "DEF_FAV": self.save_default_favourites(v["DEF_FAV"])
 
             elif e == "Launch Theme Changer":
                 self.launch_theme_changer()
