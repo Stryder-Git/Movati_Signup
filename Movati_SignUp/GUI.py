@@ -7,7 +7,7 @@ class GUI:
     _gui_settings_loc = ".\\Data\\gui_settings.json"
 
 
-    def __init__(self, p, s):
+    def __init__(self, p, s, create_main_window= True):
         self.p = p
         self.s = s
 
@@ -21,7 +21,8 @@ class GUI:
 
         # self.s.connect()   ####
         # self.update_completed_failed_autosignups() ######
-        self.create_main_window()
+        if create_main_window:
+            self.create_main_window()
 
     def get_settings(self):
         with open(self._gui_settings_loc, "r") as settings:
