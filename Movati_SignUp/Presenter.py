@@ -9,6 +9,7 @@ class Presenter(Getter):
     # RESCOLS = ["uDay", "uTime", "dtStart", "dtEnd", "uName", "SignTime", "Status"]
     # RESCOLS = Getter.FULLINFO[1:-1]
     RESCOLS = ["uDay", "uTime", "uName", "uTeacher"]
+    _RESCOLS = ["Day", "Time", "Name", "Teacher"]
 
 
     def __init__(self, set_info= True):
@@ -110,16 +111,10 @@ class Presenter(Getter):
     def remove_from_autosignup(self, choices):
         self.AutoSignUp = self.AutoSignUp[~self.AutoSignUp.index.isin(choices)]
 
-    def _prepare_df_for_text_hook(self, df):
-        return df.sort_values("dtStart")
-
-    def make_results_text(self, df, alternative= "nothing found ..."):
-        results_df = self._prepare_df_for_text_hook(df)
-        if not results_df.empty:
-            txt = df[self.RESCOLS].to_string(index=False).split("\n")
-            txt[0] = txt[0].replace("u", " ", 4)
-            return txt, results_df
-        else: return [alternative], results_df
+    def prepare_data(self, df):
+        df = df.sort_values("dtStart")
+        values = df[self.RESCOLS].values.tolist()
+        return values, df
 
     def get_class_names(self): return self.Info['uName'].unique().tolist()
 

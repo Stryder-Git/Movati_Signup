@@ -1,4 +1,6 @@
 from Movati_SignUp import GUI, Dobby, Presenter, Getter
+import pandas as pd
+from tabulate import tabulate
 
 # g = Getter(get_site=True)
 #
@@ -7,8 +9,14 @@ from Movati_SignUp import GUI, Dobby, Presenter, Getter
 # g.cancel_reservations(links)
 
 gui = GUI(Presenter(), Dobby())
-gui.launch_main()
 
+# df = gui.p.AutoSignUp
+
+# df = df.apply(maker)
+
+# gui.show_warning_window(df)
+gui.launch_main()
+#
 # from Tests import test_presenter
 #
 # for att in dir(test_presenter):

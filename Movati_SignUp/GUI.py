@@ -61,14 +61,11 @@ class GUI:
 
         self.p.remove_from_autosignup(completed + failed)
 
-    def resolve(self, choices, options, df):
+    def resolve(self, choices, df):
         """this should get a list with the choices, a list with the options that were chosen from
             and the dataframe that the options list was created from
         """
-        # first get the index of the choices in the options list [these are the integer locations in df.index]
-        ix = [options.index(choice)-1 for choice in choices] # -1 because the first row in options are the columns
-        # then return the indexes at the integer locations
-        return df.index[ix]
+        return df.index[choices]
 
     def create_main_window(self):
         #### MAIN WINDOW
@@ -79,9 +76,7 @@ class GUI:
                 [sg.DD(self.p._times, k= "START", default_value= self.DEF_START), sg.T("and"),
                  sg.DD(self.p._times, k= "END", default_value= self.DEF_END)]
                 ]),
-                sg.Column([
-                [sg.T("Day:  ")],
-                [sg.LB(["All"]+self.p.get_days(), k= "DAYS", s= (25, 7), select_mode= "extended")],
+                sg.Column([[sg.LB(["All"]+self.p.get_days(), k= "DAYS", s= (25, 7), select_mode= "extended")]
                 ]),
                 sg.Column([
                 [sg.CB("Only Favourites", k= "FAV", default= self.DEF_FAV)], [sg.B("Filter")]
@@ -90,33 +85,34 @@ class GUI:
 
             df = self.p.apply_filter(self.p.create_filter(
                 favs=self.DEF_FAV, start=self.DEF_START, end=self.DEF_END))
-            self._main_options, self._main_df = self.p.make_results_text(df)
+            self._main_values, self._main_df = self.p.prepare_data(df)
 
             # Data Row
             self.data = [
-                [sg.LB(self._main_options, s=(80, 15), k="OPTIONS", select_mode="extended")],
+                [sg.Table(values= self._main_values, headings= self.p._RESCOLS, size=(80, 15),
+                          select_mode= sg.TABLE_SELECT_MODE_BROWSE, k="OPTIONS")],
                 [sg.B("Open"), sg.B("Add to AutoSignUp")]]
 
             self.Main_Tab = sg.Tab("Main", [self.customfilters, *self.data])
 
-
-            self._auto_options, self._auto_df = self.p.make_results_text(self.p.AutoSignUp)
+            self._auto_values, self._auto_df = self.p.prepare_data(self.p.AutoSignUp)
             ### AutoSignup Tab
             self.Auto_Tab = sg.Tab("AutoSignUp", [
-                [sg.LB(self._auto_options, s= (80, 15), k= "AUTO", select_mode= "extended")],
+                [sg.Table(values= self._auto_values, headings= self.p._RESCOLS, size= (80, 15),
+                          select_mode= sg.TABLE_SELECT_MODE_BROWSE, k= "AUTO")],
                 [sg.B("Remove from AutoSignUp")]])
 
             ### Personalize Tab
             col_height = 8
             self.Personalize_Tab = sg.Tab("Personalize", [[
                 sg.Column([[sg.T("Available Classes:")],
-                    [sg.LB(self.p.get_class_names(), s= (30, col_height), k= "pNAME", select_mode= "extended")],
+                    [sg.LB(sorted(self.p.get_class_names()), s= (24, col_height), k= "pNAME", select_mode= "extended")],
                     [sg.T("Add to: "), sg.B("Favourites", k= "addFAV"), sg.B("Blacklist", k= "addBL")]]),
                 sg.Column([[sg.T("Favourites:")],
-                    [sg.LB(self.p.Lists["Favourites"], s= (20, col_height), k= "pFAV", select_mode= "extended")],
+                    [sg.LB(sorted(self.p.Lists["Favourites"]), s= (23, col_height), k= "pFAV", select_mode= "extended")],
                     [sg.B("Remove", k= "removeFAV")]]),
                 sg.Column([[sg.T("Blacklist:")],
-                    [sg.LB(self.p.Lists["Blacklist"], s= (20, col_height), k= "pBL", select_mode= "extended")],
+                    [sg.LB(sorted(self.p.Lists["Blacklist"]), s= (23, col_height), k= "pBL", select_mode= "extended")],
                     [sg.B("Remove", k= "removeBL")]])
                 ],
                 [sg.Column([[sg.T("Default time between:")],
@@ -137,14 +133,12 @@ class GUI:
             return self.window
 
     def show_warning_window(self, df, msg="", info= None, buttons= None):
-        options, df = self.p.make_results_text(df)
-
+        values, df = self.p.prepare_data(df)
         if info is None:
-            info = [sg.LB(options, s= (60, 10),
-                          k= "OPTIONS", select_mode= "extended")]
+            info = [sg.Table(values= values, headings= self.p._RESCOLS,
+                             s= (70, 10), k= "OPTIONS")]
         if buttons is None:
-            buttons = [sg.B("Open"), sg.T(" "*20), sg.B("Close Popup")]
-
+            buttons = [sg.B("Open"), sg.T(" "*90), sg.B("Close Popup")]
 
         layout = [[sg.T(msg)], info, buttons]
         failed_window = sg.Window("Warning", layout)
@@ -154,20 +148,20 @@ class GUI:
             if se in (sg.WIN_CLOSED, "Close Popup"):
                 failed_window.close();break
             elif se == "Open":
-                for link in self.p.Info.loc[self.resolve(sv["OPTIONS"], options, df), "Link"]:
+                for link in self.p.Info.loc[self.resolve(sv["OPTIONS"], df), "Link"]:
                     web.open(link)
 
     def update_main_options(self, filter_result):
-        self._main_options, self._main_df = self.p.make_results_text(filter_result)
-        self.window["OPTIONS"].update(self._main_options)
+        self._main_values, self._main_df = self.p.prepare_data(filter_result)
+        self.window["OPTIONS"].update(values= self._main_values)
 
     def update_auto_tab(self):
-        self._auto_options, self._auto_df = self.p.make_results_text(self.p.AutoSignUp)
-        self.window["AUTO"].update(self._auto_options)
+        self._auto_values, self._auto_df = self.p.prepare_data(self.p.AutoSignUp)
+        self.window["AUTO"].update(values= self._auto_values)
 
     def update_personalize_list(self):
-        self.window["pBL"].update(self.p.Lists["Blacklist"])
-        self.window["pFAV"].update(self.p.Lists["Favourites"])
+        self.window["pBL"].update(sorted(self.p.Lists["Blacklist"]))
+        self.window["pFAV"].update(sorted(self.p.Lists["Favourites"]))
 
     def filters_todct(self, v):
         return dict(days=v["DAYS"], favs=v["FAV"], start=v["START"], end=v["END"])
@@ -195,11 +189,11 @@ class GUI:
                 self.update_main_options(results)
 
             elif e == "Open":
-                choices = self.resolve(v["OPTIONS"], self._main_options, self._main_df)
+                choices = self.resolve(v["OPTIONS"], self._main_df)
                 for link in self.p.Info.loc[choices, "Link"]: web.open(link)
 
             elif e == "Add to AutoSignUp":
-                choices = self.resolve(v["OPTIONS"], self._main_options, self._main_df)
+                choices = self.resolve(v["OPTIONS"], self._main_df)
                 failed = self.p.add_to_autosignup(choices)
                 self.update_auto_tab()
                 if not failed.empty:
@@ -208,7 +202,7 @@ class GUI:
 
             ### Auto Tab
             elif e == "Remove from AutoSignUp":
-                choices = self.resolve(v["AUTO"], self._auto_options, self._auto_df)
+                choices = self.resolve(v["AUTO"], self._auto_df)
                 self.p.remove_from_autosignup(choices)
                 self.update_auto_tab()
 
