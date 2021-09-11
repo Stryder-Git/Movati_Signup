@@ -128,17 +128,17 @@ class GUI:
                                                               self.Personalize_Tab]])]])
             return self.window
 
-
-
-    def show_warning_window(self, df, msg=""):
+    def show_warning_window(self, df, msg="", info= None, buttons= None):
         options, df = self.p.make_results_text(df)
 
-        layout = [
-            [sg.T(msg)],
-            [sg.LB(options, s= (60, 10), k= "OPTIONS", select_mode= "extended")],
-            [sg.B("Open"), sg.T(" "*20), sg.B("Close Popup")]
-        ]
+        if info is None:
+            info = [sg.LB(options, s= (60, 10),
+                          k= "OPTIONS", select_mode= "extended")]
+        if buttons is None:
+            buttons = [sg.B("Open"), sg.T(" "*20), sg.B("Close Popup")]
 
+
+        layout = [[sg.T(msg)], info, buttons]
         failed_window = sg.Window("Warning", layout)
         while True:
             se, sv = failed_window.read()
