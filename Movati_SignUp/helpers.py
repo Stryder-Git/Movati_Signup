@@ -1,4 +1,5 @@
 import os
+import shutil
 import socket as sk
 import PySimpleGUI as sg
 from json import loads, dumps
@@ -99,7 +100,7 @@ class Update_Installer:
         self.code_folder = "Movati_Signup"
         self.project_folder = "."
 
-    def __call__(self, filename, contents):
+    def __call__(self, filename, contents, backup= True):
         if not (isinstance(filename, str) and isinstance(contents, str)):
             raise ValueError(f"filename and contents must be string")
         if "." in filename or ".py" in filename:
@@ -109,6 +110,13 @@ class Update_Installer:
         filepath = os.path.join(self.code_folder, filename + ".py")
         if os.path.exists(filepath):
             print("deleting ", filepath)
+
+            if backup:
+                print("backing up ", filepath)
+                target = os.path.join(self.code_folder, "old", filename + ".py")
+                if os.path.exists(target): os.remove(target)
+                shutil.copy(filepath, target)
+
             os.remove(filepath)
 
         print("creating ", filepath)
