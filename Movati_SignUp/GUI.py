@@ -90,8 +90,8 @@ class GUI:
             # Data Row
             self.data = [
                 [sg.Table(values= self._main_values, headings= self.p._RESCOLS, size=(80, 15),
-                          select_mode= sg.TABLE_SELECT_MODE_BROWSE, k="OPTIONS")],
-                [sg.B("Open"), sg.B("Add to AutoSignUp")]]
+                          select_mode= sg.TABLE_SELECT_MODE_EXTENDED, k="OPTIONS")],
+                [sg.B("Open"), sg.B("Add to AutoSignUp"), sg.B("Remove from AutoSignUp", k="OPTIONSREMOVE")]]
 
             self.Main_Tab = sg.Tab("Main", [self.customfilters, *self.data])
 
@@ -99,8 +99,8 @@ class GUI:
             ### AutoSignup Tab
             self.Auto_Tab = sg.Tab("AutoSignUp", [
                 [sg.Table(values= self._auto_values, headings= self.p._RESCOLS, size= (80, 15),
-                          select_mode= sg.TABLE_SELECT_MODE_BROWSE, k= "AUTO")],
-                [sg.B("Remove from AutoSignUp")]])
+                          select_mode= sg.TABLE_SELECT_MODE_EXTENDED, k= "AUTO")],
+                [sg.B("Remove from AutoSignUp", k= "AUTOREMOVE")]])
 
             ### Personalize Tab
             col_height = 8
@@ -196,16 +196,24 @@ class GUI:
                 choices = self.resolve(v["OPTIONS"], self._main_df)
                 failed = self.p.add_to_autosignup(choices)
                 self.update_auto_tab()
+
+                results = self.p.apply_filter(self.p.lastfilter)
+                self.update_main_options(results)
+
                 if not failed.empty:
                     self.show_warning_window(failed, "These classes seem to be unavailable")
 
 
             ### Auto Tab
-            elif e == "Remove from AutoSignUp":
-                choices = self.resolve(v["AUTO"], self._auto_df)
+            elif e in ("OPTIONSREMOVE", "AUTOREMOVE"):
+                _e = e.replace("REMOVE", "")
+                choices = self.resolve(v[_e], self._auto_df if _e == "AUTO" else self._main_df)
+
                 self.p.remove_from_autosignup(choices)
                 self.update_auto_tab()
 
+                results = self.p.apply_filter(self.p.lastfilter)
+                self.update_main_options(results)
 
             ### Personalize Tab
             elif e in ("addFAV", "addBL"):

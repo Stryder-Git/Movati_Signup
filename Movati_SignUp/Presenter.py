@@ -9,7 +9,7 @@ class Presenter(Getter):
     # RESCOLS = ["uDay", "uTime", "dtStart", "dtEnd", "uName", "SignTime", "Status"]
     # RESCOLS = Getter.FULLINFO[1:-1]
     RESCOLS = ["uDay", "uTime", "uName", "uTeacher"]
-    _RESCOLS = ["Day", "Time", "Name", "Teacher"]
+    _RESCOLS = ["Day", "Time", "Name", "Teacher", "Auto"]
 
 
     def __init__(self, set_info= True):
@@ -113,7 +113,9 @@ class Presenter(Getter):
 
     def prepare_data(self, df):
         df = df.sort_values("dtStart")
-        values = df[self.RESCOLS].values.tolist()
+        df["Auto"] = " "
+        df.loc[df.index.isin(self.AutoSignUp.index), "Auto"] = "x"
+        values = df[self.RESCOLS + ["Auto"]].values.tolist()
         return values, df
 
     def get_class_names(self): return self.Info['uName'].unique().tolist()
