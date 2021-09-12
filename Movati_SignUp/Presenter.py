@@ -10,7 +10,7 @@ class Presenter(Getter):
     # RESCOLS = Getter.FULLINFO[1:-1]
     RESCOLS = ["uDay", "uTime", "uName", "uTeacher"]
     _RESCOLS = ["Day", "Time", "Name", "Teacher", "Auto"]
-
+    EMPTY = "empty_dataframe"
 
     def __init__(self, set_info= True):
         Getter.__init__(self)
@@ -111,11 +111,19 @@ class Presenter(Getter):
     def remove_from_autosignup(self, choices):
         self.AutoSignUp = self.AutoSignUp[~self.AutoSignUp.index.isin(choices)]
 
-    def prepare_data(self, df):
+    def prepare_data(self, df, cols= None):
         df = df.sort_values("dtStart")
-        df["Auto"] = " "
-        df.loc[df.index.isin(self.AutoSignUp.index), "Auto"] = "x"
-        values = df[self.RESCOLS + ["Auto"]].values.tolist()
+        auto = self._RESCOLS[-1]
+        if cols is None: cols = self.RESCOLS + [auto]
+
+        if df.empty:
+            df = df.append(Series(
+                {col: " "*15 for col in df.columns}, name= self.EMPTY))
+            df.iloc[:, 0] = "Nothing here..."
+
+        df[auto] = " "
+        df.loc[df.index.isin(self.AutoSignUp.index), auto] = "x"
+        values = df[cols].values.tolist()
         return values, df
 
     def get_class_names(self): return self.Info['uName'].unique().tolist()

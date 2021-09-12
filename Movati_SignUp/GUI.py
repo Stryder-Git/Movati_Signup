@@ -99,7 +99,7 @@ class GUI:
             ### AutoSignup Tab
             self.Auto_Tab = sg.Tab("AutoSignUp", [
                 [sg.Table(values= self._auto_values, headings= self.p._RESCOLS, size= (80, 15),
-                          select_mode= sg.TABLE_SELECT_MODE_EXTENDED, k= "AUTO")],
+                          select_mode= sg.TABLE_SELECT_MODE_EXTENDED, k= "AUTO", max_col_width= 100)],
                 [sg.B("Remove from AutoSignUp", k= "AUTOREMOVE")]])
 
             ### Personalize Tab
@@ -167,7 +167,6 @@ class GUI:
         return dict(days=v["DAYS"], favs=v["FAV"], start=v["START"], end=v["END"])
 
     def launch_main(self):
-        print(self._auto_df)
         while True:
             e, v = self.window.read()
             print(e, v)

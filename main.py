@@ -1,6 +1,5 @@
 from Movati_SignUp import GUI, Dobby, Presenter, Getter
-import pandas as pd
-from tabulate import tabulate
+
 
 # g = Getter(get_site=True)
 #
@@ -10,9 +9,8 @@ from tabulate import tabulate
 
 gui = GUI(Presenter(), Dobby())
 
-# df = gui.p.AutoSignUp
+# df = gui.p.Info.drop(labels= gui.p.Info.index)
 
-# df = df.apply(maker)
 
 # gui.show_warning_window(df)
 gui.launch_main()
