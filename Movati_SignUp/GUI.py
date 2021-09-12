@@ -245,6 +245,7 @@ class GUI:
         self.window.close()
 
     def launch_theme_changer(self):
+
         def create_tabs(current_theme):
             choose_tab = sg.Tab("Choose", [
                 [sg.T("Choose a theme:")],
@@ -253,6 +254,7 @@ class GUI:
                 [sg.T(f"Current theme:\n\n{current_theme}")],
                 [sg.B("Try it"), sg.B("Choose it")], [sg.B("Close Popup")]
             ])
+
             nothing_tab = sg.Tab("Nothing", [
                 [sg.T("Just to see the color of tabs...")]
             ])
@@ -264,7 +266,9 @@ class GUI:
             se, sv = theme_changer.read()
             print(se, sv)
             if se in (sg.WIN_CLOSED, "Close Popup"):
+                self.window.close()
                 sg.theme(self.THEME)
+                self.create_main_window()
                 break
 
             elif se == "Try it":
