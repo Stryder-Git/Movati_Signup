@@ -23,8 +23,8 @@ class GUI:
 
         sg.theme(self.THEME)
 
-        # self.s.connect()   ####
-        # self.update_completed_failed_autosignups() ######
+        self.s.connect()   ####
+        self.update_completed_failed_autosignups() ######
         if create_main_window:
             self.create_main_window()
 
@@ -187,13 +187,13 @@ class GUI:
             if e in (sg.WIN_CLOSED, "Quit"):
                 self.p.save_all()
                 self.save_settings()
-                # signups = self.p.AutoSignUp[["dtSignTime", "Status", "Link"]].sort_values("dtSignTime") ##########
-                # signups["dtSignTime"] = signups["dtSignTime"].astype("string")  ##########
-                #
-                # self.s.send_update(signups.to_dict())   ##########
-                # self.update_completed_failed_autosignups()  ##########
-                # self.p.save_all()   ##########
-                # self.s.close()  ##########
+                signups = self.p.AutoSignUp[["dtSignTime", "Status", "Link"]].sort_values("dtSignTime") ##########
+                signups["dtSignTime"] = signups["dtSignTime"].astype("string")  ##########
+
+                self.s.send_update(signups.to_dict())   ##########
+                self.update_completed_failed_autosignups()  ##########
+                self.p.save_all()   ##########
+                self.s.close()  ##########
                 break
 
             ### Main Tab
