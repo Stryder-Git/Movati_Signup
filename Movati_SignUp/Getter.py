@@ -146,14 +146,15 @@ class Getter:
                 if "classRow" in clss["class"]:
                     time_ = clss.find(class_= "schedTime").text.strip()
                     name = clss.find(class_= "schedTitle").text.strip()
-                    link = clss.find(class_= "schedSignup")
                     teacher = clss.find(class_= "halfcol").text.split("\n")[1].strip()
+                    link = clss.find(class_= "schedSignup")
+                    # sometimes a class won't have a link to it available
+                    link = None if link.a is None else link.a["href"]
 
                     # A unique id is created, if the same class is encountered,
                     # (for instances when refreshing) the id will be the same
                     id_ = self.hash(day, time_, name)
-                    # sometimes a class won't have a link to it available
-                    link = None if link.a is None else link.a["href"]
+
                     # save with classname, day and time as key to the link
                     self.Raw_Info[id_] = self.createInfoDict(
                         ID= id_, uDay= day, uTime= time_.strip(), uName= name, uTeacher= teacher, Link= link)
