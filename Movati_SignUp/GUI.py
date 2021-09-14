@@ -94,19 +94,19 @@ class GUI:
                                                           start_am= self.DEF_START_AM, end=self.DEF_END,
                                                           end_am= self.DEF_END_AM))
             self._main_values, self._main_df = self.p.prepare_data(df)
-
             # Data Row
             self.data = [
-                [sg.Table(values= self._main_values, headings= self.p._RESCOLS, size=(80, 15),
+                [sg.Table(values= self._main_values, headings= self.p.RESCOLSA, size=(80, 15),
                           select_mode= sg.TABLE_SELECT_MODE_EXTENDED, k="OPTIONS")],
                 [sg.B("Open"), sg.B("Add to AutoSignUp"), sg.B("Remove from AutoSignUp", k="OPTIONSREMOVE")]]
 
             self.Main_Tab = sg.Tab("Main", [self.customfilters, *self.data])
 
-            self._auto_values, self._auto_df = self.p.prepare_data(self.p.AutoSignUp)
+
+            self._auto_values, self._auto_df = self.p.prepare_data(self.p.AutoSignUp, auto_col= False)
             ### AutoSignup Tab
             self.Auto_Tab = sg.Tab("AutoSignUp", [
-                [sg.Table(values= self._auto_values, headings= self.p._RESCOLS, size= (80, 15),
+                [sg.Table(values= self._auto_values, headings= self.p.RESCOLS, size= (80, 15),
                           select_mode= sg.TABLE_SELECT_MODE_EXTENDED, k= "AUTO", max_col_width= 100)],
                 [sg.B("Remove from AutoSignUp", k= "AUTOREMOVE")]])
 
@@ -148,7 +148,7 @@ class GUI:
     def show_warning_window(self, df, msg="", info= None, buttons= None):
         values, df = self.p.prepare_data(df)
         if info is None:
-            info = [sg.Table(values= values, headings= self.p._RESCOLS,
+            info = [sg.Table(values= values, headings= self.p.RESCOLSA,
                              s= (70, 10), k= "OPTIONS")]
         if buttons is None:
             buttons = [sg.B("Open"), sg.T(" "*90), sg.B("Close Popup")]
@@ -169,7 +169,7 @@ class GUI:
         self.window["OPTIONS"].update(values= self._main_values)
 
     def update_auto_tab(self):
-        self._auto_values, self._auto_df = self.p.prepare_data(self.p.AutoSignUp)
+        self._auto_values, self._auto_df = self.p.prepare_data(self.p.AutoSignUp, auto_col= False)
         self.window["AUTO"].update(values= self._auto_values)
 
     def update_personalize_list(self):

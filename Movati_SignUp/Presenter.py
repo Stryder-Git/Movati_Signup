@@ -6,10 +6,11 @@ from pprint import pprint
 class Presenter(Getter):
     """This is where all the storing and converting to
      presentable data is done"""
-    # RESCOLS = ["uDay", "uTime", "dtStart", "dtEnd", "uName", "SignTime", "Status"]
-    # RESCOLS = Getter.FULLINFO[1:-1]
-    RESCOLS = ["uDay", "uTime", "uName", "uTeacher"]
-    _RESCOLS = ["Day", "Time", "Name", "Teacher", "Auto"]
+
+    _RESCOLS = ["uDay", "uTime", "uName", "uTeacher"]
+    RESCOLS = ["Day", "Time", "Name", "Teacher"]
+    _RESCOLSA = ["uDay", "uTime", "uName", "uTeacher", "Auto"]
+    RESCOLSA = ["Day", "Time", "Name", "Teacher", "Auto"]
     EMPTY = "empty_dataframe"
 
     def __init__(self, set_info= True):
@@ -97,7 +98,7 @@ class Presenter(Getter):
             self.update_full_info(not_full[not_full].index)
 
         self.AutoSignUp = concat([self.AutoSignUp, self.Info.loc[choices]], ignore_index= False)
-        self.AutoSignUp = self.AutoSignUp.drop_duplicates(subset= self.RESCOLS)
+        self.AutoSignUp = self.AutoSignUp.drop_duplicates(subset= self._RESCOLS)
 
         arefull = self.AutoSignUp.Status.isin([self.FULL])
         are_full = self.AutoSignUp[arefull]
@@ -111,18 +112,20 @@ class Presenter(Getter):
     def remove_from_autosignup(self, choices):
         self.AutoSignUp = self.AutoSignUp[~self.AutoSignUp.index.isin(choices)]
 
-    def prepare_data(self, df, cols= None):
-        df = df.sort_values("dtStart")
-        auto = self._RESCOLS[-1]
-        if cols is None: cols = self.RESCOLS + [auto]
+    def prepare_data(self, df, auto_col= True):
 
         if df.empty:
-            df = df.append(Series(
-                {col: " "*15 for col in df.columns}, name= self.EMPTY))
+            df = df.append(Series({col: " "*15 for col in df.columns}, name= self.EMPTY))
             df.iloc[:, 0] = "Nothing here..."
+        else: df = df.sort_values("dtStart")
 
-        df[auto] = " "
-        df.loc[df.index.isin(self.AutoSignUp.index), auto] = "x"
+        if auto_col:
+            cols = self._RESCOLSA
+            df[cols[-1]] = " "
+            df.loc[df.index.isin(self.AutoSignUp.index), cols[-1]] = "x"
+        else:
+            cols = self._RESCOLS
+
         values = df[cols].values.tolist()
         return values, df
 
