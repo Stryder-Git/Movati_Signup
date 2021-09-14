@@ -14,7 +14,11 @@ class GUI:
         self.settings = self.get_settings()
         self.THEME = self.settings["default_theme"]
         self.DEF_START= self.settings["default_start"]
+        self.DEF_START_AM = bool(self.settings["default_start_am"])
+
         self.DEF_END = self.settings["default_end"]
+        self.DEF_END_AM = bool(self.settings["default_end_am"])
+
         self.DEF_FAV = bool(self.settings["default_favourites"])
 
         sg.theme(self.THEME)
@@ -36,10 +40,12 @@ class GUI:
         self.DEF_FAV = self.settings["default_favourites"] = new_def
         self.save_settings()
 
-    def save_default_time(self, start, end):
+    def save_default_time(self, start, start_am, end, end_am):
         print("saving time: ", start, end)
         self.DEF_START = self.settings["default_start"] = start
+        self.DEF_START_AM = self.settings["default_start_am"] = start_am
         self.DEF_END = self.settings["default_end"] = end
+        self.DEF_END_AM = self.settings["default_end_am"] = end_am
         self.save_settings()
 
     def change_theme(self, theme= None):
@@ -74,7 +80,9 @@ class GUI:
             self.customfilters = [sg.Column(
                 [[sg.T("Time between: ")],
                 [sg.DD(self.p._times, k= "START", default_value= self.DEF_START), sg.T("and"),
-                 sg.DD(self.p._times, k= "END", default_value= self.DEF_END)]
+                 sg.DD(self.p._times, k= "END", default_value= self.DEF_END)],
+                [sg.CB("am", key= "START_AM", default= self.DEF_START_AM), sg.T(" "*10),
+                 sg.CB("am", key= "END_AM", default= self.DEF_END_AM)]
                 ]),
                 sg.Column([[sg.LB(["All"]+self.p.get_days(), k= "DAYS", s= (25, 7), select_mode= "extended")]
                 ]),
@@ -82,9 +90,9 @@ class GUI:
                 [sg.CB("Only Favourites", k= "FAV", default= self.DEF_FAV)], [sg.B("Filter")]
                 ])
             ]
-
-            df = self.p.apply_filter(self.p.create_filter(
-                favs=self.DEF_FAV, start=self.DEF_START, end=self.DEF_END))
+            df = self.p.apply_filter(self.p.create_filter(favs=self.DEF_FAV, start= self.DEF_START,
+                                                          start_am= self.DEF_START_AM, end=self.DEF_END,
+                                                          end_am= self.DEF_END_AM))
             self._main_values, self._main_df = self.p.prepare_data(df)
 
             # Data Row
@@ -119,7 +127,12 @@ class GUI:
                              [sg.DD(self.p._times, k="pSTART", default_value= self.DEF_START,
                                     enable_events= True), sg.T("and"),
                               sg.DD(self.p._times, k="pEND", default_value= self.DEF_END,
-                                    enable_events= True)]]),
+                                    enable_events= True)],
+                            [sg.CB("am", key="pSTART_AM", default=self.DEF_START_AM,
+                                   enable_events= True), sg.T(" " * 10),
+                             sg.CB("am", key="pEND_AM", default=self.DEF_END_AM,
+                                   enable_events= True)]
+                            ]),
                  sg.Column([[sg.T("Change the theme:\n")],
                            [sg.Button("Launch Theme Changer")],
                             [sg.T(f"Your current theme: \n{self.THEME}")]]),
@@ -164,7 +177,8 @@ class GUI:
         self.window["pFAV"].update(sorted(self.p.Lists["Favourites"]))
 
     def filters_todct(self, v):
-        return dict(days=v["DAYS"], favs=v["FAV"], start=v["START"], end=v["END"])
+        return dict(days=v["DAYS"], favs=v["FAV"], start=v["START"],
+                    start_am= v["START_AM"], end=v["END"], end_am= v["END_AM"])
 
     def launch_main(self):
         while True:
@@ -233,8 +247,8 @@ class GUI:
                 for choice in choices: self.p.Lists[lst].remove(choice)
                 self.update_personalize_list()
 
-            elif e in ("pSTART", "pEND"):
-                self.save_default_time(v["pSTART"], v["pEND"])
+            elif e in ("pSTART", "pEND", "pSTART_AM", "pEND_AM"):
+                self.save_default_time(v["pSTART"], v["pSTART_AM"], v["pEND"], v["pEND_AM"])
 
             elif e == "DEF_FAV":
                 self.save_default_favourites(v["DEF_FAV"])

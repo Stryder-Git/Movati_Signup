@@ -136,18 +136,16 @@ class Presenter(Getter):
         return days
 
     def create_time_list(self):
-        times = [f"{'0' if i < 10 else ''}{i}:00 {'a' if i < 12 else 'p'}m" for i in range(3, 24)]
-        x = times.index("13:00 pm")
-        adj = [s.replace(s.split(":")[0], str(int(s.split(":")[0]) - 12)) for s in times[x:]]
-        return [*times[:x], *adj]
+        times = [f"{'0' if i < 10 else ''}{i}:00" for i in range(1, 13)]
+        return times
 
 
-    def _ampmtotd(self, ampm):
-        add = to_timedelta(12, unit= "H") if "pm" in ampm and not ampm.startswith("12:") else to_timedelta(0)
-        return to_timedelta(int(ampm.split(":")[0]), unit= "H") + add
+    def _amtotd(self, t, am):
+        add = to_timedelta(0) if am or t.startswith("12:") else to_timedelta(12, unit= "H")
+        return to_timedelta(int(t.split(":")[0]), unit= "H") + add
 
 
-    def create_filter(self, days= None, favs= None, start= None, end= None):
+    def create_filter(self, days= None, favs= None, start= None, start_am= None, end= None, end_am= None):
         """parses the requested filter options.
         If any options werent selected a mask with only true values is generated"""
         # remove All, if that makes the list empty, there is no restriction placed
@@ -162,8 +160,8 @@ class Presenter(Getter):
         else: days = self._alltrue()
 
         # the between time filter
-        start = to_timedelta(0) if start is None else self._ampmtotd(start)
-        end = to_timedelta(24, unit= "H") if end is None else self._ampmtotd(end)
+        start = to_timedelta(0) if start is None else self._amtotd(start, start_am)
+        end = to_timedelta(24, unit= "H") if end is None else self._amtotd(end, end_am)
         timed = self.Info.dtStart - self.Info.dtStart.dt.normalize()
         when = timed.ge(start) & timed.lt(end)
 
