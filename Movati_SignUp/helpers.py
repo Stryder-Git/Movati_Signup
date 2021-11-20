@@ -10,6 +10,7 @@ class Dobby:
 
     def __init__(self):
         self.socket = sk.socket(sk.AF_INET, sk.SOCK_STREAM)
+        print(os.getcwd())
 
     def connect(self):
         try:
@@ -17,9 +18,13 @@ class Dobby:
             self.socket.connect((sk.gethostbyname("MPC"), 1289))
             self.send("movati", "")
         except OSError:
-            sg.popup_ok("Could not connect to server, make sure laptop is running")
-            exit()
+            print("could not connect")
+            self.connected = False
+            return False
+
+        self.connected = True
         self.make_initial_exchange()
+        return True
 
     def read(self, length = SIZE, keep_bytes= False):
         if keep_bytes:
@@ -44,6 +49,8 @@ class Dobby:
             exit()
 
         num_updates = int(flag)
+        if not num_updates: return
+
         for i in range(1, num_updates + 1):
             print(f"installing update number {i} of {num_updates}")
             length, filename = self.read().split("::")
@@ -58,10 +65,9 @@ class Dobby:
 
             install_update(filename.strip(), contents)
 
-        if num_updates:
-            sg.popup_ok("Updates were installed, press ok to close this GUI and then you can restart it")
-            self.close()
-            exit()
+        sg.popup_ok("Updates were installed, press ok to close this GUI and then you can restart it")
+        self.close()
+        exit()
 
     def close(self):
         try:

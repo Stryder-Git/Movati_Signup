@@ -23,8 +23,11 @@ class GUI:
 
         sg.theme(self.THEME)
 
-        self.s.connect()   ####
-        self.update_completed_failed_autosignups() ######
+        if self.s.connect():
+            self.update_completed_failed_autosignups()
+        else:
+            print("not connected")
+
         if create_main_window:
             self.create_main_window()
 
@@ -63,7 +66,7 @@ class GUI:
         if failed:
             print("received failed")
             have_failed = self.p.AutoSignUp[self.p.AutoSignUp.index.isin(failed)]
-            self.show_warning_window(have_failed)
+            self.show_warning_window(have_failed, "These signups have failed for some reason ...")
 
         self.p.remove_from_autosignup(completed + failed)
 
@@ -190,10 +193,14 @@ class GUI:
                 signups = self.p.AutoSignUp[["dtSignTime", "Status", "Link"]].sort_values("dtSignTime") ##########
                 signups["dtSignTime"] = signups["dtSignTime"].astype("string")  ##########
 
-                self.s.send_update(signups.to_dict())   ##########
-                self.update_completed_failed_autosignups()  ##########
-                self.p.save_all()   ##########
-                self.s.close()  ##########
+                if self.s.connected:
+                    self.s.send_update(signups.to_dict())   ##########
+                    self.update_completed_failed_autosignups()  ##########
+                    self.p.save_all()
+                    self.s.close()  ##########
+                else:
+                    print("not connected")
+
                 break
 
             ### Main Tab
