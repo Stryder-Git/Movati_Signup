@@ -194,10 +194,13 @@ class GUI:
                 signups["dtSignTime"] = signups["dtSignTime"].astype("string")  ##########
 
                 if self.s.connected:
-                    self.s.send_update(signups.to_dict())   ##########
-                    self.update_completed_failed_autosignups()  ##########
-                    self.p.save_all()
-                    self.s.close()  ##########
+                    try:
+                        self.s.send_update(signups.to_dict())   ##########
+                    except self.s.DobbyDisconnect: pass
+                    else:
+                        self.update_completed_failed_autosignups()  ##########
+                        self.p.save_all()
+                        self.s.close()  ##########
                 else:
                     print("not connected")
 

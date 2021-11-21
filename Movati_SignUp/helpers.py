@@ -8,9 +8,13 @@ class Dobby:
     SIZE = 22
     F = "utf-8"
 
+    class DobbyDisconnect(ConnectionResetError):
+        pass
+
     def __init__(self):
         self.socket = sk.socket(sk.AF_INET, sk.SOCK_STREAM)
         print(os.getcwd())
+        self.connected = False
 
     def connect(self):
         try:
@@ -19,11 +23,13 @@ class Dobby:
             self.send("movati", "")
         except OSError:
             print("could not connect")
-            self.connected = False
+            return False
+        try:
+            self.make_initial_exchange()
+        except OSError:
             return False
 
         self.connected = True
-        self.make_initial_exchange()
         return True
 
     def read(self, length = SIZE, keep_bytes= False):
@@ -75,6 +81,7 @@ class Dobby:
             self.socket.close()
         except OSError:
             pass
+        self.connected = False
 
     def get_completed_failed(self):
         print("getting completed")
@@ -94,13 +101,16 @@ class Dobby:
         return f"{header:<{self.SIZE}}".encode(self.F) + msg
 
     def send(self, flag, msg):
-        self.socket.send(self.make_msg(flag, msg))
+        try:
+            self.socket.send(self.make_msg(flag, msg))
+        except (OSError, ConnectionResetError) as e:
+            self.connected = False
+            raise self.DobbyDisconnect()
 
     def send_update(self, data):
         data = dumps(data)
         self.send("update", data)
         print("sent: ", data)
-
 
 
 class Update_Installer:
