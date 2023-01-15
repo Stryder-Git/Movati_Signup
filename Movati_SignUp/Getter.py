@@ -43,10 +43,11 @@ class Getter:
     FULL = "Full" # when its completely full
     AVAILABLE = "Available"  # when you can already sign up
     WAITLIST = "Waitlist"  # when you can wait for a place to open
-    USERN = "tung.angela@hotmail.com"
-    PASSW = "BooandBaby"
+    USERN = "marcel_pieper@hotmail.com"
+    PASSW = "stupidpassw"
     FULLINFO = "ID uDay uTime uName uTeacher Day Time Name Status SignTime dtStart dtEnd dtSignTime Link".split()
-    URL = "https://movatiathletic.com/club-schedules/?club=guelph"
+
+    URL = "https://movatiathletic.com/members"
     INFOLOC = ".\\Data\\Info.csv"
     AUTOLOC = ".\\Data\\AutoSignUp.csv"
     REGISTLOC = ".\\Data\\Registered.csv"
@@ -242,7 +243,19 @@ class Getter:
 
 if __name__ == '__main__':
 
-    g = Getter(get_site= False)
+    paths = [
+        "INFOLOC",
+        "AUTOLOC",
+        "REGISTLOC",
+        "LISTSLOC",
+        "FILTERSLOC",
+        "LOGLOC",
+    ]
+    for path in paths:
+        setattr(Getter, path, "." + getattr(Getter, path))
+
+
+    g = Getter(get_site=False)
 
     links = ["https://api.groupexpro.com/gxp/reservations/start/index/12414350/09/11/2021"]
 
