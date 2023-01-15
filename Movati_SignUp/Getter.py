@@ -103,6 +103,10 @@ class Getter:
 
     def get(self, url= None): return BS(reqs.get(url or self.URL).text, features= "lxml")
 
+    def get_locations(self):
+        locs = self.get().find_all(class_="returntolocation")
+        return [loc["onclick"].split(",")[-2][2:-1] for loc in locs]
+
     def _calc_date(self, d):
         month, date = d.split()
         if len(date) == 1: d.replace(date, f"0{date}")
@@ -257,7 +261,11 @@ if __name__ == '__main__':
 
     g = Getter(get_site=False)
 
-    links = ["https://api.groupexpro.com/gxp/reservations/start/index/12414350/09/11/2021"]
+    pprint(g.get_locations())
+
+
+
+    # links = ["https://api.groupexpro.com/gxp/reservations/start/index/12414350/09/11/2021"]
 
 
 
