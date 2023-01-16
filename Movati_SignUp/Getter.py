@@ -65,7 +65,7 @@ class Getter:
         self.Raw_Info = {}
 
         if get_site:
-            self.Site = self.get()
+            self.Site = self.get_soup()
             self.set_days()
         else: self.Site = None
         self.Info = self.getInfo()
@@ -101,10 +101,10 @@ class Getter:
         self.saveAuto()
         self.saveLists()
 
-    def get(self, url= None): return BS(reqs.get(url or self.URL).text, features= "lxml")
+    def get_soup(self, url= None): return BS(reqs.get(url or self.URL).text, features="lxml")
 
     def get_locations(self):
-        locs = self.get().find_all(class_="returntolocation")
+        locs = self.get_soup().find_all(class_="returntolocation")
         return [loc["onclick"].split(",")[-2][2:-1] for loc in locs]
 
     def _calc_date(self, d):
@@ -261,7 +261,8 @@ if __name__ == '__main__':
 
     g = Getter(get_site=False)
 
-    pprint(g.get_locations())
+    # pprint(g.get_locations())
+
 
 
 
