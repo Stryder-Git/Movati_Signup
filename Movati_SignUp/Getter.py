@@ -43,10 +43,11 @@ class Getter:
     FULL = "Full" # when its completely full
     AVAILABLE = "Available"  # when you can already sign up
     WAITLIST = "Waitlist"  # when you can wait for a place to open
-    USERN = "tung.angela@hotmail.com"
-    PASSW = "BooandBaby"
+    USERN = "marcel_pieper@hotmail.com"
+    PASSW = "stupidpassw"
     FULLINFO = "ID uDay uTime uName uTeacher Day Time Name Status SignTime dtStart dtEnd dtSignTime Link".split()
-    URL = "https://movatiathletic.com/club-schedules/?club=guelph"
+
+    URL = "https://movatiathletic.com/members"
     INFOLOC = ".\\Data\\Info.csv"
     AUTOLOC = ".\\Data\\AutoSignUp.csv"
     REGISTLOC = ".\\Data\\Registered.csv"
@@ -64,7 +65,7 @@ class Getter:
         self.Raw_Info = {}
 
         if get_site:
-            self.Site = self.get()
+            self.Site = self.get_soup()
             self.set_days()
         else: self.Site = None
         self.Info = self.getInfo()
@@ -100,7 +101,11 @@ class Getter:
         self.saveAuto()
         self.saveLists()
 
-    def get(self, url= None): return BS(reqs.get(url or self.URL).text, features= "lxml")
+    def get_soup(self, url= None): return BS(reqs.get(url or self.URL).text, features="lxml")
+
+    def get_locations(self):
+        locs = self.get_soup().find_all(class_="returntolocation")
+        return [loc["onclick"].split(",")[-2][2:-1] for loc in locs]
 
     def _calc_date(self, d):
         month, date = d.split()
@@ -242,9 +247,26 @@ class Getter:
 
 if __name__ == '__main__':
 
-    g = Getter(get_site= False)
+    paths = [
+        "INFOLOC",
+        "AUTOLOC",
+        "REGISTLOC",
+        "LISTSLOC",
+        "FILTERSLOC",
+        "LOGLOC",
+    ]
+    for path in paths:
+        setattr(Getter, path, "." + getattr(Getter, path))
 
-    links = ["https://api.groupexpro.com/gxp/reservations/start/index/12414350/09/11/2021"]
+
+    g = Getter(get_site=False)
+
+    # pprint(g.get_locations())
+
+
+
+
+    # links = ["https://api.groupexpro.com/gxp/reservations/start/index/12414350/09/11/2021"]
 
 
 
